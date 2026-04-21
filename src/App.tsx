@@ -1,0 +1,63 @@
+import { useEffect, useState } from "react";
+import { Header } from "./components/Header";
+import { MobileTabBar, Sidebar } from "./components/Sidebar";
+import { Dashboard } from "./components/Dashboard";
+import { Members } from "./components/Members";
+import { TaskBoard } from "./components/TaskBoard";
+import { KudosWall } from "./components/KudosWall";
+import { MoodCheckin } from "./components/MoodCheckin";
+import { Polls } from "./components/Polls";
+import { Notes } from "./components/Notes";
+import type { View } from "./types";
+
+const VIEW_META: Record<View, { title: string; sub: string }> = {
+  dashboard: { title: "Dashboard", sub: "チームの“今”をひと目で。" },
+  members: { title: "Members", sub: "仲間のステータスと気分。" },
+  tasks: { title: "Task Board", sub: "みんなでタスクを前に進める。" },
+  kudos: { title: "Kudos Wall", sub: "感謝を贈り合う場所。" },
+  mood: { title: "Mood Check-in", sub: "今日のあなたの気分は？" },
+  polls: { title: "Polls", sub: "サクッと意思決定。" },
+  notes: { title: "Shared Notes", sub: "気軽にシェアできるメモ。" },
+};
+
+const App = () => {
+  const [view, setView] = useState<View>(() => {
+    if (typeof window === "undefined") return "dashboard";
+    const hash = window.location.hash.replace("#", "") as View;
+    return VIEW_META[hash] ? hash : "dashboard";
+  });
+
+  useEffect(() => {
+    window.location.hash = view;
+  }, [view]);
+
+  return (
+    <div className="mx-auto flex max-w-[1400px] gap-6 px-4 py-4 lg:px-6 lg:py-6">
+      <Sidebar view={view} onSelect={setView} />
+
+      <main className="min-w-0 flex-1 pb-24 lg:pb-6">
+        <Header />
+        <div className="mb-5 flex items-center gap-3">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-widest text-brand-500">
+              {VIEW_META[view].title}
+            </div>
+            <div className="text-sm text-slate-500">{VIEW_META[view].sub}</div>
+          </div>
+        </div>
+
+        {view === "dashboard" && <Dashboard onNavigate={setView} />}
+        {view === "members" && <Members />}
+        {view === "tasks" && <TaskBoard />}
+        {view === "kudos" && <KudosWall />}
+        {view === "mood" && <MoodCheckin />}
+        {view === "polls" && <Polls />}
+        {view === "notes" && <Notes />}
+      </main>
+
+      <MobileTabBar view={view} onSelect={setView} />
+    </div>
+  );
+};
+
+export default App;
