@@ -35,7 +35,7 @@ export const DemoBanner = () => {
           デモデータを表示中（アキ / レン / ソラ ほか）
         </div>
         <div className="text-xs text-slate-600">
-          自分でタスク・Kudos・投票・メモを追加すると<strong>そのカテゴリのデモは自動で消えます</strong>。まとめて一度に消すには右のボタンを押してください。
+          タスク・Kudos・投票・メモのいずれかを自分で追加すると<strong>デモ項目はまとめて自動で消えます</strong>。今すぐ消すには右のボタンを押してください。
         </div>
       </div>
       <button
