@@ -2,8 +2,16 @@ import { Sparkles, X } from "lucide-react";
 import { useStore } from "../store";
 
 export const DemoBanner = () => {
-  const { members, tasks, kudos, polls, notes, dismissDemoMembers, cloud } =
-    useStore();
+  const {
+    members,
+    tasks,
+    kudos,
+    polls,
+    notes,
+    dismissDemoMembers,
+    clearDemoContent,
+    cloud,
+  } = useStore();
 
   // Never show demo banner in cloud mode (real team data).
   if (cloud) return null;
@@ -27,26 +35,25 @@ export const DemoBanner = () => {
           デモデータを表示中（アキ / レン / ソラ ほか）
         </div>
         <div className="text-xs text-slate-600">
-          タスク・Kudos・投票・メモは<strong>あなたが追加すると自動で消えます</strong>。デモメンバーを今すぐ消すには右のボタンを押してください。
+          自分でタスク・Kudos・投票・メモを追加すると<strong>そのカテゴリのデモは自動で消えます</strong>。まとめて一度に消すには右のボタンを押してください。
         </div>
       </div>
-      {hasDemoMembers && (
-        <button
-          onClick={() => {
-            if (
-              confirm(
-                "デモメンバー（アキ・レン・ソラほか）をすべて削除します。よろしいですか？",
-              )
-            ) {
-              dismissDemoMembers();
-            }
-          }}
-          className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
-        >
-          <X className="h-3 w-3" />
-          デモメンバーを消す
-        </button>
-      )}
+      <button
+        onClick={() => {
+          if (
+            confirm(
+              "デモメンバー・デモタスク・Kudos・投票・メモをすべて削除します。よろしいですか？",
+            )
+          ) {
+            clearDemoContent();
+            if (hasDemoMembers) dismissDemoMembers();
+          }
+        }}
+        className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+      >
+        <X className="h-3 w-3" />
+        デモをすべて消す
+      </button>
     </div>
   );
 };
