@@ -2,7 +2,11 @@ import { Sparkles, X } from "lucide-react";
 import { useStore } from "../store";
 
 export const DemoBanner = () => {
-  const { members, tasks, kudos, polls, notes, dismissDemoMembers } = useStore();
+  const { members, tasks, kudos, polls, notes, dismissDemoMembers, cloud } =
+    useStore();
+
+  // Never show demo banner in cloud mode (real team data).
+  if (cloud) return null;
 
   const hasDemoMembers = members.some((m) => m.isDemo);
   const hasDemoContent =
