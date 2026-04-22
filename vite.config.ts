@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico,webmanifest}"],
+        globIgnores: ["**/og-image.png"],
       },
     }),
   ],

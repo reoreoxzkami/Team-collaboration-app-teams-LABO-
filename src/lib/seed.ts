@@ -46,6 +46,7 @@ export const seedMembers = (): Member[] => [
     mood: "🔥",
     moodNote: "新しいロードマップ、ワクワクが止まらない！",
     moodUpdatedAt: minutesAgo(10),
+    isDemo: true,
   },
   {
     id: "m-ren",
@@ -57,6 +58,7 @@ export const seedMembers = (): Member[] => [
     mood: "✨",
     moodNote: "配色を整えてます。DM歓迎！",
     moodUpdatedAt: minutesAgo(32),
+    isDemo: true,
   },
   {
     id: "m-sora",
@@ -68,6 +70,7 @@ export const seedMembers = (): Member[] => [
     mood: "🚀",
     moodNote: "デプロイ楽しい。今日もバグゼロを狙う。",
     moodUpdatedAt: minutesAgo(5),
+    isDemo: true,
   },
   {
     id: "m-mio",
@@ -79,6 +82,7 @@ export const seedMembers = (): Member[] => [
     mood: "☕",
     moodNote: "打ち合わせから戻ります。",
     moodUpdatedAt: hoursAgo(1),
+    isDemo: true,
   },
   {
     id: "m-yui",
@@ -90,6 +94,7 @@ export const seedMembers = (): Member[] => [
     mood: "😊",
     moodNote: "ユーザーさんからの嬉しい声をシェアします！",
     moodUpdatedAt: minutesAgo(22),
+    isDemo: true,
   },
   {
     id: "m-taku",
@@ -101,6 +106,7 @@ export const seedMembers = (): Member[] => [
     mood: "🧠",
     moodNote: "指標を分析中。午後に共有します。",
     moodUpdatedAt: minutesAgo(48),
+    isDemo: true,
   },
 ];
 
@@ -114,6 +120,7 @@ export const seedTasks = (): Task[] => [
     priority: "high",
     dueDate: null,
     createdAt: hoursAgo(5),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -124,6 +131,7 @@ export const seedTasks = (): Task[] => [
     priority: "medium",
     dueDate: null,
     createdAt: hoursAgo(9),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -134,6 +142,7 @@ export const seedTasks = (): Task[] => [
     priority: "medium",
     dueDate: null,
     createdAt: hoursAgo(24),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -144,6 +153,7 @@ export const seedTasks = (): Task[] => [
     priority: "high",
     dueDate: null,
     createdAt: hoursAgo(30),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -154,6 +164,7 @@ export const seedTasks = (): Task[] => [
     priority: "high",
     dueDate: null,
     createdAt: hoursAgo(2),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -164,6 +175,7 @@ export const seedTasks = (): Task[] => [
     priority: "low",
     dueDate: null,
     createdAt: hoursAgo(12),
+    isDemo: true,
   },
 ];
 
@@ -176,6 +188,7 @@ export const seedKudos = (): Kudos[] => [
     emoji: "🚀",
     color: KUDOS_COLORS[0],
     createdAt: hoursAgo(3),
+    isDemo: true,
     reactions: { "🎉": ["m-ren", "m-yui"], "👏": ["m-mio"] },
   },
   {
@@ -186,6 +199,7 @@ export const seedKudos = (): Kudos[] => [
     emoji: "💛",
     color: KUDOS_COLORS[2],
     createdAt: hoursAgo(8),
+    isDemo: true,
     reactions: { "❤️": ["m-aki"] },
   },
   {
@@ -196,6 +210,7 @@ export const seedKudos = (): Kudos[] => [
     emoji: "🎨",
     color: KUDOS_COLORS[1],
     createdAt: hoursAgo(20),
+    isDemo: true,
     reactions: { "🔥": ["m-aki", "m-sora"] },
   },
 ];
@@ -210,6 +225,7 @@ export const seedPolls = (): Poll[] => [
       { id: uid(), text: "金曜 16:00", votes: ["m-taku"] },
     ],
     createdAt: hoursAgo(6),
+    isDemo: true,
     closed: false,
     createdById: "m-aki",
   },
@@ -223,6 +239,7 @@ export const seedPolls = (): Poll[] => [
       { id: uid(), text: "サラダボウル 🥗", votes: [] },
     ],
     createdAt: hoursAgo(18),
+    isDemo: true,
     closed: false,
     createdById: "m-mio",
   },
@@ -238,6 +255,7 @@ export const seedNotes = (): Note[] => [
     pinned: true,
     authorId: "m-aki",
     updatedAt: hoursAgo(2),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -248,6 +266,7 @@ export const seedNotes = (): Note[] => [
     pinned: true,
     authorId: "m-ren",
     updatedAt: hoursAgo(7),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -258,6 +277,7 @@ export const seedNotes = (): Note[] => [
     pinned: false,
     authorId: "m-yui",
     updatedAt: hoursAgo(26),
+    isDemo: true,
   },
   {
     id: uid(),
@@ -267,6 +287,7 @@ export const seedNotes = (): Note[] => [
     pinned: false,
     authorId: "m-sora",
     updatedAt: hoursAgo(50),
+    isDemo: true,
   },
 ];
 

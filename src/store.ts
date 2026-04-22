@@ -31,6 +31,8 @@ interface AppState {
   kudos: Kudos[];
   polls: Poll[];
   notes: Note[];
+  /** User has dismissed demo members (content demo items clear automatically). */
+  demoMembersDismissed: boolean;
 
   setCurrentUser: (id: string) => void;
 
@@ -65,6 +67,11 @@ interface AppState {
   toggleNotePin: (id: string) => void;
   removeNote: (id: string) => void;
 
+  /** Clear demo content (tasks/kudos/polls/notes). Keeps demo members. */
+  clearDemoContent: () => void;
+  /** Dismiss demo members as well (after this, currentUser may need resetting). */
+  dismissDemoMembers: () => void;
+  /** Restore full seed data (used by Reset button). */
   resetDemoData: () => void;
 }
 
@@ -76,6 +83,20 @@ const initial = () => ({
   kudos: seedKudos(),
   polls: seedPolls(),
   notes: seedNotes(),
+  demoMembersDismissed: false,
+});
+
+/** Strip demo items from content arrays (keeps members intact). */
+const stripDemoContent = (s: {
+  tasks: Task[];
+  kudos: Kudos[];
+  polls: Poll[];
+  notes: Note[];
+}) => ({
+  tasks: s.tasks.filter((t) => !t.isDemo),
+  kudos: s.kudos.filter((k) => !k.isDemo),
+  polls: s.polls.filter((p) => !p.isDemo),
+  notes: s.notes.filter((n) => !n.isDemo),
 });
 
 export const useStore = create<AppState>()(
@@ -108,6 +129,7 @@ export const useStore = create<AppState>()(
 
       addTask: ({ title, description, assigneeId, priority }) =>
         set((s) => ({
+          ...stripDemoContent(s),
           tasks: [
             {
               id: uid(),
@@ -119,7 +141,7 @@ export const useStore = create<AppState>()(
               dueDate: null,
               createdAt: new Date().toISOString(),
             },
-            ...s.tasks,
+            ...s.tasks.filter((t) => !t.isDemo),
           ],
         })),
 
@@ -138,6 +160,7 @@ export const useStore = create<AppState>()(
 
       addKudos: ({ toId, message, emoji }) =>
         set((s) => ({
+          ...stripDemoContent(s),
           kudos: [
             {
               id: uid(),
@@ -149,7 +172,7 @@ export const useStore = create<AppState>()(
               createdAt: new Date().toISOString(),
               reactions: {},
             },
-            ...s.kudos,
+            ...s.kudos.filter((k) => !k.isDemo),
           ],
         })),
 
@@ -173,6 +196,7 @@ export const useStore = create<AppState>()(
 
       addPoll: ({ question, options }) =>
         set((s) => ({
+          ...stripDemoContent(s),
           polls: [
             {
               id: uid(),
@@ -184,7 +208,7 @@ export const useStore = create<AppState>()(
               closed: false,
               createdById: s.currentUserId,
             },
-            ...s.polls,
+            ...s.polls.filter((p) => !p.isDemo),
           ],
         })),
 
@@ -219,6 +243,7 @@ export const useStore = create<AppState>()(
 
       addNote: ({ title, content, color }) =>
         set((s) => ({
+          ...stripDemoContent(s),
           notes: [
             {
               id: uid(),
@@ -229,7 +254,7 @@ export const useStore = create<AppState>()(
               authorId: s.currentUserId,
               updatedAt: new Date().toISOString(),
             },
-            ...s.notes,
+            ...s.notes.filter((n) => !n.isDemo),
           ],
         })),
 
@@ -251,6 +276,25 @@ export const useStore = create<AppState>()(
 
       removeNote: (id) =>
         set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
+
+      clearDemoContent: () =>
+        set((s) => ({
+          ...stripDemoContent(s),
+        })),
+
+      dismissDemoMembers: () =>
+        set((s) => {
+          const realMembers = s.members.filter((m) => !m.isDemo);
+          const nextCurrent =
+            realMembers.find((m) => m.id === s.currentUserId)?.id ??
+            realMembers[0]?.id ??
+            "";
+          return {
+            members: realMembers,
+            currentUserId: nextCurrent,
+            demoMembersDismissed: true,
+          };
+        }),
 
       resetDemoData: () => set(initial()),
     }),

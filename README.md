@@ -15,7 +15,8 @@
 - **投票**：選択肢を作ってサクッと合意形成
 - **共有メモ**：カラフルな付箋風の共有ノート、ピン留めも可能
 
-データはすべてブラウザの localStorage に保存されます（無料ホスティングだけで完結）。
+データはデフォルトではブラウザの localStorage に保存されます（無料ホスティングだけで完結）。
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` を設定すると、メール / Google サインインとチーム作成・招待コード参加が有効になります（下記「🔐 Supabase を有効化する」参照）。
 
 ## 🛠 技術スタック
 
@@ -52,19 +53,48 @@ npm run typecheck # TypeScript 型チェック
 https://<GitHub Username>.github.io/Team-collaboration-app-teams-LABO-/
 ```
 
+## 🔐 Supabase を有効化する（任意）
+
+Supabase を設定すると以下が有効になります：
+
+- メール / パスワードと **Google** サインイン
+- **チーム作成** と **招待コードでの参加**（1 ユーザー → 複数チーム所属可）
+- Row-Level Security による他チームとの完全分離
+
+### 手順
+
+1. [Supabase Dashboard](https://supabase.com/dashboard) で New Project を作成（Region は `Northeast Asia (Tokyo)` 推奨）
+2. **Settings → API** から `Project URL` と `anon public key` をコピー
+3. **ローカル開発**：リポジトリ直下に `.env.local` を作成
+   ```
+   VITE_SUPABASE_URL=https://xxxx.supabase.co
+   VITE_SUPABASE_ANON_KEY=xxxxxxxx
+   ```
+4. **本番**：GitHub リポジトリの **Settings → Secrets and variables → Actions → Variables** で同じ名前の Repository variable を追加（※Secret ではなく Variable で OK。クライアントサイドに露出する想定の anon key のため）
+5. **SQL Editor** で `supabase/migrations/0001_init.sql` の内容を貼り付けて Run（スキーマ + RLS + RPC が作成されます）
+6. **Authentication → Providers** で
+   - `Email`：Enabled（デフォルト ON）
+   - `Google`：Enabled にして、Google Cloud Console で OAuth 2.0 Client ID を作成し Client ID / Secret を貼り付け
+   - `URL Configuration` → Site URL に公開 URL を追加
+7. デプロイして、サインインを試す
+
+> `.env.local` が無い状態では **ローカル demo モード**で動作します（認証をスキップ）。
+
 ## 📁 プロジェクト構成
 
 ```
 teams-LABO/
-├─ public/                PWA アイコン / favicon
+├─ public/                PWA アイコン / favicon / og-image / robots / sitemap
 ├─ src/
-│  ├─ components/         画面コンポーネント
-│  ├─ lib/                ユーティリティ
-│  ├─ store.ts            Zustand ストア
+│  ├─ components/         画面コンポーネント（auth/ 以下にサインイン関連）
+│  ├─ hooks/              useAuth など
+│  ├─ lib/                supabase / auth / seo / seed などのユーティリティ
+│  ├─ store.ts            Zustand ストア（デモ自動クリア対応）
 │  ├─ types.ts            共通型定義
-│  ├─ App.tsx             アプリ本体
+│  ├─ App.tsx             アプリ本体（AuthGate でラップ）
 │  ├─ main.tsx            エントリーポイント
 │  └─ index.css           Tailwind + 共通スタイル
+├─ supabase/migrations/   Supabase スキーマ + RLS + RPC
 ├─ vite.config.ts
 ├─ tailwind.config.js
 └─ .github/workflows/     CI / デプロイ

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://reoreoxzkami.github.io/Team-collaboration-app-teams-LABO-/sitemap.xml

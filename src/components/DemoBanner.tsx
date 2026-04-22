@@ -1,0 +1,48 @@
+import { Sparkles, X } from "lucide-react";
+import { useStore } from "../store";
+
+export const DemoBanner = () => {
+  const { members, tasks, kudos, polls, notes, dismissDemoMembers } = useStore();
+
+  const hasDemoMembers = members.some((m) => m.isDemo);
+  const hasDemoContent =
+    tasks.some((t) => t.isDemo) ||
+    kudos.some((k) => k.isDemo) ||
+    polls.some((p) => p.isDemo) ||
+    notes.some((n) => n.isDemo);
+
+  if (!hasDemoMembers && !hasDemoContent) return null;
+
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-violet-200/60 bg-gradient-to-r from-violet-50 via-pink-50 to-amber-50 p-3 pl-4 shadow-sm">
+      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500 text-white shadow-lg shadow-violet-500/30">
+        <Sparkles className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1 text-sm">
+        <div className="font-bold text-slate-800">
+          デモデータを表示中（アキ / レン / ソラ ほか）
+        </div>
+        <div className="text-xs text-slate-600">
+          タスク・Kudos・投票・メモは<strong>あなたが追加すると自動で消えます</strong>。デモメンバーを今すぐ消すには右のボタンを押してください。
+        </div>
+      </div>
+      {hasDemoMembers && (
+        <button
+          onClick={() => {
+            if (
+              confirm(
+                "デモメンバー（アキ・レン・ソラほか）をすべて削除します。よろしいですか？",
+              )
+            ) {
+              dismissDemoMembers();
+            }
+          }}
+          className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+        >
+          <X className="h-3 w-3" />
+          デモメンバーを消す
+        </button>
+      )}
+    </div>
+  );
+};
