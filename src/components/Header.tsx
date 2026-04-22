@@ -80,7 +80,10 @@ export const Header = () => {
             onClick={() => {
               if (confirm("サインアウトしますか？")) {
                 signOut().then(() => {
+                  // Drop persisted cloud snapshot so the next visitor starts
+                  // clean (login page), not on the previous team's data.
                   window.localStorage.removeItem("teams-labo-active-team");
+                  window.localStorage.removeItem("teams-labo-state");
                   window.location.reload();
                 });
               }

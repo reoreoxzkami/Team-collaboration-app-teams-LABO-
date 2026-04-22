@@ -205,57 +205,48 @@ export const useStore = create<AppState>()(
 
       setMemberStatus: (id, status) => {
         const s = get();
-        if (s.cloud) {
-          if (id !== s.cloud.userId) return;
-          updateMyTeamMember(s.cloud.teamId, { status }).catch(
-            logCloudError("setMemberStatus"),
-          );
-          return;
-        }
+        if (s.cloud && id !== s.cloud.userId) return;
         set((s) => ({
           members: s.members.map((m) =>
             m.id === id ? { ...m, status } : m,
           ),
         }));
+        if (s.cloud) {
+          updateMyTeamMember(s.cloud.teamId, { status }).catch(
+            logCloudError("setMemberStatus"),
+          );
+        }
       },
 
       setMemberMood: (id, mood, moodNote) => {
         const s = get();
-        if (s.cloud) {
-          if (id !== s.cloud.userId) return;
-          updateMyTeamMember(s.cloud.teamId, {
-            current_mood_emoji: mood,
-            current_mood_note: moodNote,
-            mood_updated_at: new Date().toISOString(),
-          }).catch(logCloudError("setMemberMood"));
-          return;
-        }
+        if (s.cloud && id !== s.cloud.userId) return;
+        const now = new Date().toISOString();
         set((s) => ({
           members: s.members.map((m) =>
             m.id === id
-              ? { ...m, mood, moodNote, moodUpdatedAt: new Date().toISOString() }
+              ? { ...m, mood, moodNote, moodUpdatedAt: now }
               : m,
           ),
         }));
+        if (s.cloud) {
+          updateMyTeamMember(s.cloud.teamId, {
+            current_mood_emoji: mood,
+            current_mood_note: moodNote,
+            mood_updated_at: now,
+          }).catch(logCloudError("setMemberMood"));
+        }
       },
 
       addTask: ({ title, description, assigneeId, priority }) => {
         const s = get();
-        if (s.cloud) {
-          insertTask({
-            team_id: s.cloud.teamId,
-            title,
-            description,
-            priority,
-            assignee_id: assigneeId ?? null,
-          }).catch(logCloudError("insertTask"));
-          return;
-        }
+        const id = uid();
+        // Optimistic: add locally in both modes.
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           tasks: [
             {
-              id: uid(),
+              id,
               title,
               description: description ?? "",
               status: "todo",
@@ -264,25 +255,35 @@ export const useStore = create<AppState>()(
               dueDate: null,
               createdAt: new Date().toISOString(),
             },
-            ...s.tasks.filter((t) => !t.isDemo),
+            ...(s.cloud ? s.tasks : s.tasks.filter((t) => !t.isDemo)),
           ],
         }));
+        if (s.cloud) {
+          insertTask({
+            id,
+            team_id: s.cloud.teamId,
+            title,
+            description,
+            priority,
+            assignee_id: assigneeId ?? null,
+          }).catch(logCloudError("insertTask"));
+        }
       },
 
       updateTaskStatus: (id, status) => {
-        const s = get();
-        if (s.cloud) {
-          cloudUpdateTask(id, { status }).catch(logCloudError("updateTaskStatus"));
-          return;
-        }
         set((s) => ({
           tasks: s.tasks.map((t) => (t.id === id ? { ...t, status } : t)),
         }));
+        if (get().cloud) {
+          cloudUpdateTask(id, { status }).catch(logCloudError("updateTaskStatus"));
+        }
       },
 
       updateTask: (id, patch) => {
-        const s = get();
-        if (s.cloud) {
+        set((s) => ({
+          tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        }));
+        if (get().cloud) {
           const dbPatch: Parameters<typeof cloudUpdateTask>[1] = {};
           if (patch.title !== undefined) dbPatch.title = patch.title;
           if (patch.description !== undefined) dbPatch.description = patch.description;
@@ -291,59 +292,50 @@ export const useStore = create<AppState>()(
           if (patch.assigneeId !== undefined) dbPatch.assignee_id = patch.assigneeId;
           if (patch.dueDate !== undefined) dbPatch.due_date = patch.dueDate;
           cloudUpdateTask(id, dbPatch).catch(logCloudError("updateTask"));
-          return;
         }
-        set((s) => ({
-          tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
-        }));
       },
 
       removeTask: (id) => {
-        const s = get();
-        if (s.cloud) {
-          deleteTask(id).catch(logCloudError("removeTask"));
-          return;
-        }
         set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
+        if (get().cloud) {
+          deleteTask(id).catch(logCloudError("removeTask"));
+        }
       },
 
       addKudos: ({ toId, message, emoji }) => {
         const s = get();
-        if (s.cloud) {
-          insertKudos({
-            team_id: s.cloud.teamId,
-            to_id: toId,
-            message,
-            emoji,
-          }).catch(logCloudError("insertKudos"));
-          return;
-        }
+        const id = uid();
+        const color =
+          KUDOS_COLORS[Math.floor(Math.random() * KUDOS_COLORS.length)];
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           kudos: [
             {
-              id: uid(),
+              id,
               fromId: s.currentUserId,
               toId,
               message,
               emoji,
-              color: KUDOS_COLORS[Math.floor(Math.random() * KUDOS_COLORS.length)],
+              color,
               createdAt: new Date().toISOString(),
               reactions: {},
             },
-            ...s.kudos.filter((k) => !k.isDemo),
+            ...(s.cloud ? s.kudos : s.kudos.filter((k) => !k.isDemo)),
           ],
         }));
+        if (s.cloud) {
+          insertKudos({
+            id,
+            team_id: s.cloud.teamId,
+            to_id: toId,
+            message,
+            emoji,
+            color,
+          }).catch(logCloudError("insertKudos"));
+        }
       },
 
       toggleKudosReaction: (kudosId, emoji) => {
-        const s = get();
-        if (s.cloud) {
-          cloudToggleKudosReaction(kudosId, emoji).catch(
-            logCloudError("toggleKudosReaction"),
-          );
-          return;
-        }
         set((s) => {
           const userId = s.currentUserId;
           return {
@@ -360,42 +352,44 @@ export const useStore = create<AppState>()(
             }),
           };
         });
+        if (get().cloud) {
+          cloudToggleKudosReaction(kudosId, emoji).catch(
+            logCloudError("toggleKudosReaction"),
+          );
+        }
       },
 
       addPoll: ({ question, options }) => {
         const s = get();
-        if (s.cloud) {
-          insertPoll({
-            team_id: s.cloud.teamId,
-            question,
-            options,
-          }).catch(logCloudError("insertPoll"));
-          return;
-        }
+        const id = uid();
+        const optionObjs = options
+          .filter((o) => o.trim().length > 0)
+          .map((text) => ({ id: uid(), text, votes: [] as string[] }));
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           polls: [
             {
-              id: uid(),
+              id,
               question,
-              options: options
-                .filter((o) => o.trim().length > 0)
-                .map((text) => ({ id: uid(), text, votes: [] })),
+              options: optionObjs,
               createdAt: new Date().toISOString(),
               closed: false,
               createdById: s.currentUserId,
             },
-            ...s.polls.filter((p) => !p.isDemo),
+            ...(s.cloud ? s.polls : s.polls.filter((p) => !p.isDemo)),
           ],
         }));
+        if (s.cloud) {
+          insertPoll({
+            id,
+            team_id: s.cloud.teamId,
+            question,
+            options: optionObjs.map((o) => ({ id: o.id, text: o.text })),
+          }).catch(logCloudError("insertPoll"));
+        }
       },
 
       voteOnPoll: (pollId, optionId) => {
-        const s = get();
-        if (s.cloud) {
-          castPollVote(pollId, optionId).catch(logCloudError("voteOnPoll"));
-          return;
-        }
         set((s) => {
           const userId = s.currentUserId;
           return {
@@ -416,63 +410,57 @@ export const useStore = create<AppState>()(
             }),
           };
         });
+        if (get().cloud) {
+          castPollVote(pollId, optionId).catch(logCloudError("voteOnPoll"));
+        }
       },
 
       closePoll: (pollId) => {
-        const s = get();
-        if (s.cloud) {
-          const poll = s.polls.find((p) => p.id === pollId);
-          if (!poll) return;
-          togglePollClosed(pollId, !poll.closed).catch(logCloudError("closePoll"));
-          return;
-        }
+        const poll = get().polls.find((p) => p.id === pollId);
+        if (!poll) return;
+        const next = !poll.closed;
         set((s) => ({
           polls: s.polls.map((p) =>
-            p.id === pollId ? { ...p, closed: !p.closed } : p,
+            p.id === pollId ? { ...p, closed: next } : p,
           ),
         }));
+        if (get().cloud) {
+          togglePollClosed(pollId, next).catch(logCloudError("closePoll"));
+        }
       },
 
       addNote: ({ title, content, color }) => {
         const s = get();
-        if (s.cloud) {
-          insertNote({
-            team_id: s.cloud.teamId,
-            title,
-            content,
-            color:
-              color ?? NOTE_COLORS[s.notes.length % NOTE_COLORS.length],
-          }).catch(logCloudError("insertNote"));
-          return;
-        }
+        const id = uid();
+        const resolvedColor =
+          color ?? NOTE_COLORS[s.notes.length % NOTE_COLORS.length];
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           notes: [
             {
-              id: uid(),
+              id,
               title,
               content,
-              color: color ?? NOTE_COLORS[s.notes.length % NOTE_COLORS.length],
+              color: resolvedColor,
               pinned: false,
               authorId: s.currentUserId,
               updatedAt: new Date().toISOString(),
             },
-            ...s.notes.filter((n) => !n.isDemo),
+            ...(s.cloud ? s.notes : s.notes.filter((n) => !n.isDemo)),
           ],
         }));
+        if (s.cloud) {
+          insertNote({
+            id,
+            team_id: s.cloud.teamId,
+            title,
+            content,
+            color: resolvedColor,
+          }).catch(logCloudError("insertNote"));
+        }
       },
 
       updateNote: (id, patch) => {
-        const s = get();
-        if (s.cloud) {
-          cloudUpdateNote(id, {
-            ...(patch.title !== undefined ? { title: patch.title } : {}),
-            ...(patch.content !== undefined ? { content: patch.content } : {}),
-            ...(patch.color !== undefined ? { color: patch.color } : {}),
-            ...(patch.pinned !== undefined ? { pinned: patch.pinned } : {}),
-          }).catch(logCloudError("updateNote"));
-          return;
-        }
         set((s) => ({
           notes: s.notes.map((n) =>
             n.id === id
@@ -480,32 +468,35 @@ export const useStore = create<AppState>()(
               : n,
           ),
         }));
+        if (get().cloud) {
+          cloudUpdateNote(id, {
+            ...(patch.title !== undefined ? { title: patch.title } : {}),
+            ...(patch.content !== undefined ? { content: patch.content } : {}),
+            ...(patch.color !== undefined ? { color: patch.color } : {}),
+            ...(patch.pinned !== undefined ? { pinned: patch.pinned } : {}),
+          }).catch(logCloudError("updateNote"));
+        }
       },
 
       toggleNotePin: (id) => {
-        const s = get();
-        if (s.cloud) {
-          const note = s.notes.find((n) => n.id === id);
-          if (!note) return;
-          cloudUpdateNote(id, { pinned: !note.pinned }).catch(
+        const note = get().notes.find((n) => n.id === id);
+        if (!note) return;
+        const next = !note.pinned;
+        set((s) => ({
+          notes: s.notes.map((n) => (n.id === id ? { ...n, pinned: next } : n)),
+        }));
+        if (get().cloud) {
+          cloudUpdateNote(id, { pinned: next }).catch(
             logCloudError("toggleNotePin"),
           );
-          return;
         }
-        set((s) => ({
-          notes: s.notes.map((n) =>
-            n.id === id ? { ...n, pinned: !n.pinned } : n,
-          ),
-        }));
       },
 
       removeNote: (id) => {
-        const s = get();
-        if (s.cloud) {
-          deleteNote(id).catch(logCloudError("removeNote"));
-          return;
-        }
         set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
+        if (get().cloud) {
+          deleteNote(id).catch(logCloudError("removeNote"));
+        }
       },
 
       clearDemoContent: () =>

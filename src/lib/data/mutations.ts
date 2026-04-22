@@ -52,6 +52,7 @@ export const updateMyTeamMember = async (
 // ===== tasks =====
 
 export const insertTask = async (input: {
+  id?: string;
   team_id: string;
   title: string;
   description?: string;
@@ -62,6 +63,7 @@ export const insertTask = async (input: {
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) throw new Error("not signed in");
   const { error } = await sb.from("tasks").insert({
+    ...(input.id ? { id: input.id } : {}),
     team_id: input.team_id,
     title: input.title,
     description: input.description ?? "",
@@ -109,68 +111,62 @@ const KUDOS_COLORS = [
 ];
 
 export const insertKudos = async (input: {
+  id?: string;
   team_id: string;
   to_id: string;
   message: string;
   emoji: string;
+  color?: string;
 }) => {
   const sb = must();
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) throw new Error("not signed in");
   const { error } = await sb.from("kudos").insert({
+    ...(input.id ? { id: input.id } : {}),
     team_id: input.team_id,
     from_id: auth.user.id,
     to_id: input.to_id,
     message: input.message,
     emoji: input.emoji,
-    color: randomFromArr(KUDOS_COLORS),
+    color: input.color ?? randomFromArr(KUDOS_COLORS),
     reactions: {},
   });
   if (error) throw error;
 };
 
+/**
+ * Atomically toggles the caller's reaction to a kudos row via a server-side
+ * RPC (see `supabase/migrations/0002_atomic_ops.sql`). Avoids the read /
+ * modify / write race present when multiple users react concurrently.
+ */
 export const toggleKudosReaction = async (
   kudosId: string,
   emoji: string,
 ): Promise<void> => {
   const sb = must();
-  const { data: auth } = await sb.auth.getUser();
-  if (!auth.user) throw new Error("not signed in");
-  const { data, error } = await sb
-    .from("kudos")
-    .select("reactions")
-    .eq("id", kudosId)
-    .single();
+  const { error } = await sb.rpc("toggle_kudos_reaction", {
+    p_kudos_id: kudosId,
+    p_emoji: emoji,
+  });
   if (error) throw error;
-  const current = (data.reactions as Record<string, string[]>) ?? {};
-  const existing = current[emoji] ?? [];
-  const has = existing.includes(auth.user.id);
-  const next = has
-    ? existing.filter((u) => u !== auth.user.id)
-    : [...existing, auth.user.id];
-  const reactions = { ...current, [emoji]: next };
-  if (next.length === 0) delete reactions[emoji];
-  const { error: err2 } = await sb
-    .from("kudos")
-    .update({ reactions })
-    .eq("id", kudosId);
-  if (err2) throw err2;
 };
 
 // ===== polls =====
 
 export const insertPoll = async (input: {
+  id?: string;
   team_id: string;
   question: string;
-  options: string[];
+  options: Array<{ id: string; text: string }> | string[];
 }) => {
   const sb = must();
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) throw new Error("not signed in");
-  const options: PollOptionRow[] = input.options
-    .filter((t) => t.trim().length > 0)
-    .map((text) => ({ id: uuid(), text }));
+  const options: PollOptionRow[] = input.options.map((o) =>
+    typeof o === "string" ? { id: uuid(), text: o } : o,
+  );
   const { error } = await sb.from("polls").insert({
+    ...(input.id ? { id: input.id } : {}),
     team_id: input.team_id,
     question: input.question,
     options,
@@ -229,6 +225,7 @@ export const castPollVote = async (pollId: string, optionId: string) => {
 // ===== notes =====
 
 export const insertNote = async (input: {
+  id?: string;
   team_id: string;
   title: string;
   content: string;
@@ -238,6 +235,7 @@ export const insertNote = async (input: {
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) throw new Error("not signed in");
   const { error } = await sb.from("notes").insert({
+    ...(input.id ? { id: input.id } : {}),
     team_id: input.team_id,
     title: input.title,
     content: input.content,
@@ -254,10 +252,11 @@ export const updateNote = async (
 ) => {
   const sb = must();
   const { data: auth } = await sb.auth.getUser();
+  if (!auth.user) throw new Error("not signed in");
   const updates = {
     ...patch,
     updated_at: new Date().toISOString(),
-    updated_by: auth.user?.id ?? null,
+    updated_by: auth.user.id,
   };
   const { error } = await sb.from("notes").update(updates).eq("id", noteId);
   if (error) throw error;

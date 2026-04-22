@@ -35,41 +35,57 @@ export const fetchTeamSnapshot = async (
 ): Promise<TeamSnapshot> => {
   const sb = must();
 
-  const [membersRes, profilesRes, tasksRes, kudosRes, pollsRes, votesRes, notesRes] =
-    await Promise.all([
-      sb.from("team_members").select("*").eq("team_id", teamId),
-      sb.from("profiles").select("*"),
-      sb
-        .from("tasks")
-        .select("*")
-        .eq("team_id", teamId)
-        .order("created_at", { ascending: false }),
-      sb
-        .from("kudos")
-        .select("*")
-        .eq("team_id", teamId)
-        .order("created_at", { ascending: false }),
-      sb
-        .from("polls")
-        .select("*")
-        .eq("team_id", teamId)
-        .order("created_at", { ascending: false }),
-      sb.from("poll_votes").select("*"),
-      sb
-        .from("notes")
-        .select("*")
-        .eq("team_id", teamId)
-        .order("updated_at", { ascending: false }),
-    ]);
+  // First fetch team_members + polls + other team-scoped tables in parallel.
+  const [membersRes, tasksRes, kudosRes, pollsRes, notesRes] = await Promise.all([
+    sb.from("team_members").select("*").eq("team_id", teamId),
+    sb
+      .from("tasks")
+      .select("*")
+      .eq("team_id", teamId)
+      .order("created_at", { ascending: false }),
+    sb
+      .from("kudos")
+      .select("*")
+      .eq("team_id", teamId)
+      .order("created_at", { ascending: false }),
+    sb
+      .from("polls")
+      .select("*")
+      .eq("team_id", teamId)
+      .order("created_at", { ascending: false }),
+    sb
+      .from("notes")
+      .select("*")
+      .eq("team_id", teamId)
+      .order("updated_at", { ascending: false }),
+  ]);
 
-  for (const r of [membersRes, profilesRes, tasksRes, kudosRes, pollsRes, votesRes, notesRes]) {
+  for (const r of [membersRes, tasksRes, kudosRes, pollsRes, notesRes]) {
     if (r.error) throw r.error;
   }
+
+  const teamMembers = (membersRes.data ?? []) as TeamMemberRow[];
+  const pollRows = (pollsRes.data ?? []) as PollRow[];
+
+  // Now fetch only the profiles and poll_votes that belong to this team.
+  const memberIds = teamMembers.map((m) => m.user_id);
+  const pollIds = pollRows.map((p) => p.id);
+
+  const [profilesRes, votesRes] = await Promise.all([
+    memberIds.length > 0
+      ? sb.from("profiles").select("*").in("id", memberIds)
+      : Promise.resolve({ data: [] as ProfileRow[], error: null }),
+    pollIds.length > 0
+      ? sb.from("poll_votes").select("*").in("poll_id", pollIds)
+      : Promise.resolve({ data: [] as PollVoteRow[], error: null }),
+  ]);
+
+  if (profilesRes.error) throw profilesRes.error;
+  if (votesRes.error) throw votesRes.error;
 
   const profileById = new Map<string, ProfileRow>(
     ((profilesRes.data ?? []) as ProfileRow[]).map((p) => [p.id, p]),
   );
-  const teamMembers = (membersRes.data ?? []) as TeamMemberRow[];
 
   const members = teamMembers.map((tm) =>
     memberFromJoin(tm, profileById.get(tm.user_id) ?? null),
@@ -78,9 +94,7 @@ export const fetchTeamSnapshot = async (
   const tasks = ((tasksRes.data ?? []) as TaskRow[]).map(taskFromRow);
   const kudos = ((kudosRes.data ?? []) as KudosRow[]).map(kudosFromRow);
   const votes = (votesRes.data ?? []) as PollVoteRow[];
-  const polls = ((pollsRes.data ?? []) as PollRow[]).map((p) =>
-    pollFromRow(p, votes),
-  );
+  const polls = pollRows.map((p) => pollFromRow(p, votes));
   const notes = ((notesRes.data ?? []) as NoteRow[]).map(noteFromRow);
 
   return { members, tasks, kudos, polls, notes };
