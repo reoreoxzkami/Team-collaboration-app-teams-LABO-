@@ -1,15 +1,18 @@
-import { LogOut, RotateCcw } from "lucide-react";
+import { LogOut, RotateCcw, Users2 } from "lucide-react";
 import { useStore } from "../store";
 import { Avatar } from "./Avatar";
 import { StatusDot } from "./StatusDot";
 import { useAuth } from "../hooks/useAuth";
 import { signOut } from "../lib/auth";
 import { isSupabaseConfigured } from "../lib/supabase";
+import { useActiveTeam } from "../lib/team-context";
 
 export const Header = () => {
-  const { members, currentUserId, setCurrentUser, resetDemoData } = useStore();
+  const { members, currentUserId, setCurrentUser, resetDemoData, cloud } =
+    useStore();
   const me = members.find((m) => m.id === currentUserId);
   const { user } = useAuth();
+  const { activeTeam, setActiveTeam } = useActiveTeam();
 
   return (
     <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -23,34 +26,64 @@ export const Header = () => {
           <span className="ml-2">{me?.emoji}</span>
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          今日もチームを少しだけ明るくしよう ✨
+          {cloud && activeTeam ? (
+            <>
+              <span className="font-bold text-slate-700">{activeTeam.name}</span>{" "}
+              <span className="font-mono text-[11px] text-slate-400">
+                #{activeTeam.invite_code}
+              </span>{" "}
+              — チームでつながろう ✨
+            </>
+          ) : (
+            <>今日もチームを少しだけ明るくしよう ✨</>
+          )}
         </p>
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => {
-            if (
-              confirm(
-                "デモデータを初期状態に戻します。よろしいですか？（ローカル保存のみ）",
-              )
-            ) {
-              resetDemoData();
-            }
-          }}
-          className="btn-ghost"
-          title="デモデータをリセット"
-        >
-          <RotateCcw className="h-4 w-4" />
-          <span className="hidden sm:inline">リセット</span>
-        </button>
+        {!cloud && (
+          <button
+            onClick={() => {
+              if (
+                confirm(
+                  "デモデータを初期状態に戻します。よろしいですか？（ローカル保存のみ）",
+                )
+              ) {
+                resetDemoData();
+              }
+            }}
+            className="btn-ghost"
+            title="デモデータをリセット"
+          >
+            <RotateCcw className="h-4 w-4" />
+            <span className="hidden sm:inline">リセット</span>
+          </button>
+        )}
+
+        {cloud && (
+          <button
+            onClick={() => {
+              if (confirm("チームを切り替えますか？")) {
+                setActiveTeam(null);
+              }
+            }}
+            className="btn-ghost"
+            title="チームを切り替える"
+          >
+            <Users2 className="h-4 w-4" />
+            <span className="hidden sm:inline">チーム切替</span>
+          </button>
+        )}
 
         {isSupabaseConfigured && user && (
           <button
             onClick={() => {
               if (confirm("サインアウトしますか？")) {
                 signOut().then(() => {
+                  // Drop persisted cloud snapshot so the next visitor starts
+                  // clean (login page), not on the previous team's data.
                   window.localStorage.removeItem("teams-labo-active-team");
+                  window.localStorage.removeItem("teams-labo-state");
                   window.location.reload();
                 });
               }
@@ -72,18 +105,20 @@ export const Header = () => {
               <span>{me?.role}</span>
             </div>
           </div>
-          <select
-            aria-label="現在のユーザー"
-            className="ml-1 rounded-lg border border-slate-200 bg-white/80 px-2 py-1 text-xs font-semibold text-slate-700"
-            value={currentUserId}
-            onChange={(e) => setCurrentUser(e.target.value)}
-          >
-            {members.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.emoji} {m.name}
-              </option>
-            ))}
-          </select>
+          {!cloud && (
+            <select
+              aria-label="現在のユーザー"
+              className="ml-1 rounded-lg border border-slate-200 bg-white/80 px-2 py-1 text-xs font-semibold text-slate-700"
+              value={currentUserId}
+              onChange={(e) => setCurrentUser(e.target.value)}
+            >
+              {members.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.emoji} {m.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
     </header>

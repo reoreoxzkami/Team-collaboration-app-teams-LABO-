@@ -1,32 +1,33 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { isSupabaseConfigured } from "../../lib/supabase";
+import { useCloudSync } from "../../lib/data/sync";
+import { TeamContext, type ActiveTeam } from "../../lib/team-context";
+import { useStore } from "../../store";
 import { LoginPage } from "./LoginPage";
 import { TeamChooser } from "./TeamChooser";
 
 const ACTIVE_TEAM_KEY = "teams-labo-active-team";
-
-type Team = { id: string; name: string; invite_code: string };
 
 interface Props {
   children: ReactNode;
 }
 
 /**
- * Wraps the app with Supabase auth + team selection.
+ * Wraps the app with Supabase auth + team selection + cloud sync.
  *
  * - If Supabase is not configured → passes through (local demo mode).
  * - If not signed in → shows LoginPage.
  * - If signed in but no active team → shows TeamChooser.
- * - Otherwise renders the app.
+ * - Otherwise renders the app with the store hydrated from Supabase.
  */
 export const AuthGate = ({ children }: Props) => {
   const { ready, user } = useAuth();
-  const [activeTeam, setActiveTeam] = useState<Team | null>(() => {
+  const [activeTeam, setActiveTeam] = useState<ActiveTeam | null>(() => {
     if (typeof window === "undefined") return null;
     try {
       const raw = window.localStorage.getItem(ACTIVE_TEAM_KEY);
-      return raw ? (JSON.parse(raw) as Team) : null;
+      return raw ? (JSON.parse(raw) as ActiveTeam) : null;
     } catch {
       return null;
     }
@@ -40,6 +41,9 @@ export const AuthGate = ({ children }: Props) => {
       window.localStorage.removeItem(ACTIVE_TEAM_KEY);
     }
   }, [activeTeam]);
+
+  // Subscribe to Supabase + hydrate store (no-op when team/user missing).
+  useCloudSync(activeTeam?.id ?? null, user?.id ?? null);
 
   // Without Supabase: pass through (local demo mode).
   if (!isSupabaseConfigured) return <>{children}</>;
@@ -66,5 +70,48 @@ export const AuthGate = ({ children }: Props) => {
     );
   }
 
+  return (
+    <TeamContext.Provider value={{ activeTeam, setActiveTeam }}>
+      <HydrationGate>{children}</HydrationGate>
+    </TeamContext.Provider>
+  );
+};
+
+/**
+ * Holds children behind the loading shell until the store's first cloud
+ * snapshot has arrived, so the app never flashes seed / demo data while
+ * connected to a real team.
+ */
+const HydrationGate = ({ children }: { children: ReactNode }) => {
+  const cloudHydrated = useStore((s) => s.cloudHydrated);
+  const cloudError = useStore((s) => s.cloudError);
+  if (cloudError) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">
+        <div className="glass-panel flex max-w-md flex-col gap-3 p-6 text-sm text-slate-700">
+          <div className="text-base font-semibold text-rose-600">
+            チームデータを取得できませんでした
+          </div>
+          <div className="text-xs text-slate-500 break-words">{cloudError}</div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="self-start rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:opacity-90"
+          >
+            再読み込み
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (!cloudHydrated) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">
+        <div className="glass-panel px-5 py-3 text-sm text-slate-600">
+          チームデータを読み込み中…
+        </div>
+      </div>
+    );
+  }
   return <>{children}</>;
 };

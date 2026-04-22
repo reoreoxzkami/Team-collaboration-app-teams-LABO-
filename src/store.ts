@@ -22,6 +22,35 @@ import {
   seedTasks,
 } from "./lib/seed";
 import { uid } from "./lib/id";
+import {
+  castPollVote,
+  deleteNote,
+  deleteTask,
+  insertKudos,
+  insertNote,
+  insertPoll,
+  insertTask,
+  toggleKudosReaction as cloudToggleKudosReaction,
+  togglePollClosed,
+  updateNote as cloudUpdateNote,
+  updateMyProfile,
+  updateMyTeamMember,
+  updateTask as cloudUpdateTask,
+} from "./lib/data/mutations";
+
+interface CloudContext {
+  teamId: string;
+  userId: string;
+}
+
+interface Snapshot {
+  currentUserId: string;
+  members: Member[];
+  tasks: Task[];
+  kudos: Kudos[];
+  polls: Poll[];
+  notes: Note[];
+}
 
 interface AppState {
   version: number;
@@ -34,7 +63,21 @@ interface AppState {
   /** User has dismissed demo members (content demo items clear automatically). */
   demoMembersDismissed: boolean;
 
+  /** When set, mutations write to Supabase instead of local state. */
+  cloud: CloudContext | null;
+  /** True once the active team's initial snapshot has arrived from Supabase. */
+  cloudHydrated: boolean;
+  /** Set to a message when cloud hydration has failed after retries; null otherwise. */
+  cloudError: string | null;
+
   setCurrentUser: (id: string) => void;
+
+  /** Switches to cloud mode (or back to local when null). */
+  setCloudContext: (ctx: CloudContext | null) => void;
+  /** Surface a hydration failure to UI gates. */
+  setCloudError: (message: string | null) => void;
+  /** Replace all data arrays from a Supabase snapshot. */
+  hydrate: (snap: Snapshot) => void;
 
   // members
   updateMember: (id: string, patch: Partial<Member>) => void;
@@ -71,7 +114,7 @@ interface AppState {
   clearDemoContent: () => void;
   /** Dismiss demo members as well (after this, currentUser may need resetting). */
   dismissDemoMembers: () => void;
-  /** Restore full seed data (used by Reset button). */
+  /** Restore full seed data (used by Reset button, local mode only). */
   resetDemoData: () => void;
 }
 
@@ -84,6 +127,9 @@ const initial = () => ({
   polls: seedPolls(),
   notes: seedNotes(),
   demoMembersDismissed: false,
+  cloud: null as CloudContext | null,
+  cloudHydrated: false,
+  cloudError: null as string | null,
 });
 
 /** Strip demo items from content arrays (keeps members intact). */
@@ -99,40 +145,138 @@ const stripDemoContent = (s: {
   notes: s.notes.filter((n) => !n.isDemo),
 });
 
+const logCloudError = (label: string) => (err: unknown) => {
+  console.error(`teams-labo ${label}`, err);
+};
+
 export const useStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initial(),
 
-      setCurrentUser: (id) => set({ currentUserId: id }),
+      setCurrentUser: (id) => {
+        if (get().cloud) return; // In cloud mode, current user is the signed-in user.
+        set({ currentUserId: id });
+      },
 
-      updateMember: (id, patch) =>
+      setCloudContext: (ctx) => {
+        const prev = get().cloud;
+        if (prev?.teamId === ctx?.teamId && prev?.userId === ctx?.userId) return;
+        // Reset team-scoped arrays when entering or leaving cloud mode so the
+        // previous team's data can't leak into localStorage or briefly render
+        // during a team switch (TeamChooser is shown while ctx is null, and
+        // HydrationGate blocks until the next snapshot lands).
+        const seed = initial();
+        set({
+          cloud: ctx,
+          cloudHydrated: ctx ? false : true,
+          cloudError: null,
+          members: seed.members,
+          tasks: seed.tasks,
+          kudos: seed.kudos,
+          polls: seed.polls,
+          notes: seed.notes,
+          currentUserId: ctx?.userId ?? seed.currentUserId,
+        });
+      },
+
+      setCloudError: (message) => set({ cloudError: message }),
+
+      hydrate: (snap) =>
+        set({
+          currentUserId: snap.currentUserId,
+          members: snap.members,
+          tasks: snap.tasks,
+          kudos: snap.kudos,
+          polls: snap.polls,
+          notes: snap.notes,
+          demoMembersDismissed: true,
+          cloudHydrated: true,
+          cloudError: null,
+        }),
+
+      updateMember: (id, patch) => {
+        const s = get();
+        if (s.cloud && id !== s.cloud.userId) return; // can only update self in cloud mode
+        // Optimistic local update for all modes.
         set((s) => ({
           members: s.members.map((m) => (m.id === id ? { ...m, ...patch } : m)),
-        })),
+        }));
+        if (s.cloud) {
+          const profilePatch: {
+            display_name?: string;
+            avatar_emoji?: string;
+            color?: string;
+          } = {};
+          if (patch.name !== undefined) profilePatch.display_name = patch.name;
+          if (patch.emoji !== undefined) profilePatch.avatar_emoji = patch.emoji;
+          if (patch.color !== undefined) profilePatch.color = patch.color;
+          if (Object.keys(profilePatch).length > 0) {
+            updateMyProfile(profilePatch).catch(logCloudError("updateMyProfile"));
+          }
+          const tmPatch: {
+            status?: MemberStatus;
+            current_mood_emoji?: string;
+            current_mood_note?: string;
+            mood_updated_at?: string;
+          } = {};
+          if (patch.status !== undefined) tmPatch.status = patch.status;
+          if (patch.mood !== undefined) tmPatch.current_mood_emoji = patch.mood;
+          if (patch.moodNote !== undefined) tmPatch.current_mood_note = patch.moodNote;
+          if (patch.moodUpdatedAt !== undefined)
+            tmPatch.mood_updated_at = patch.moodUpdatedAt;
+          if (Object.keys(tmPatch).length > 0) {
+            updateMyTeamMember(s.cloud.teamId, tmPatch).catch(
+              logCloudError("updateMyTeamMember"),
+            );
+          }
+        }
+      },
 
-      setMemberStatus: (id, status) =>
+      setMemberStatus: (id, status) => {
+        const s = get();
+        if (s.cloud && id !== s.cloud.userId) return;
         set((s) => ({
           members: s.members.map((m) =>
             m.id === id ? { ...m, status } : m,
           ),
-        })),
+        }));
+        if (s.cloud) {
+          updateMyTeamMember(s.cloud.teamId, { status }).catch(
+            logCloudError("setMemberStatus"),
+          );
+        }
+      },
 
-      setMemberMood: (id, mood, moodNote) =>
+      setMemberMood: (id, mood, moodNote) => {
+        const s = get();
+        if (s.cloud && id !== s.cloud.userId) return;
+        const now = new Date().toISOString();
         set((s) => ({
           members: s.members.map((m) =>
             m.id === id
-              ? { ...m, mood, moodNote, moodUpdatedAt: new Date().toISOString() }
+              ? { ...m, mood, moodNote, moodUpdatedAt: now }
               : m,
           ),
-        })),
+        }));
+        if (s.cloud) {
+          updateMyTeamMember(s.cloud.teamId, {
+            current_mood_emoji: mood,
+            current_mood_note: moodNote,
+            mood_updated_at: now,
+          }).catch(logCloudError("setMemberMood"));
+        }
+      },
 
-      addTask: ({ title, description, assigneeId, priority }) =>
+      addTask: ({ title, description, assigneeId, priority }) => {
+        const s = get();
+        const id = uid();
+        // Optimistic: add locally in both modes.
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           tasks: [
             {
-              id: uid(),
+              id,
               title,
               description: description ?? "",
               status: "todo",
@@ -141,42 +285,87 @@ export const useStore = create<AppState>()(
               dueDate: null,
               createdAt: new Date().toISOString(),
             },
-            ...s.tasks.filter((t) => !t.isDemo),
+            ...(s.cloud ? s.tasks : s.tasks.filter((t) => !t.isDemo)),
           ],
-        })),
+        }));
+        if (s.cloud) {
+          insertTask({
+            id,
+            team_id: s.cloud.teamId,
+            title,
+            description,
+            priority,
+            assignee_id: assigneeId ?? null,
+          }).catch(logCloudError("insertTask"));
+        }
+      },
 
-      updateTaskStatus: (id, status) =>
+      updateTaskStatus: (id, status) => {
         set((s) => ({
           tasks: s.tasks.map((t) => (t.id === id ? { ...t, status } : t)),
-        })),
+        }));
+        if (get().cloud) {
+          cloudUpdateTask(id, { status }).catch(logCloudError("updateTaskStatus"));
+        }
+      },
 
-      updateTask: (id, patch) =>
+      updateTask: (id, patch) => {
         set((s) => ({
           tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
-        })),
+        }));
+        if (get().cloud) {
+          const dbPatch: Parameters<typeof cloudUpdateTask>[1] = {};
+          if (patch.title !== undefined) dbPatch.title = patch.title;
+          if (patch.description !== undefined) dbPatch.description = patch.description;
+          if (patch.status !== undefined) dbPatch.status = patch.status;
+          if (patch.priority !== undefined) dbPatch.priority = patch.priority;
+          if (patch.assigneeId !== undefined) dbPatch.assignee_id = patch.assigneeId;
+          if (patch.dueDate !== undefined) dbPatch.due_date = patch.dueDate;
+          cloudUpdateTask(id, dbPatch).catch(logCloudError("updateTask"));
+        }
+      },
 
-      removeTask: (id) =>
-        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+      removeTask: (id) => {
+        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
+        if (get().cloud) {
+          deleteTask(id).catch(logCloudError("removeTask"));
+        }
+      },
 
-      addKudos: ({ toId, message, emoji }) =>
+      addKudos: ({ toId, message, emoji }) => {
+        const s = get();
+        const id = uid();
+        const color =
+          KUDOS_COLORS[Math.floor(Math.random() * KUDOS_COLORS.length)];
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           kudos: [
             {
-              id: uid(),
+              id,
               fromId: s.currentUserId,
               toId,
               message,
               emoji,
-              color: KUDOS_COLORS[Math.floor(Math.random() * KUDOS_COLORS.length)],
+              color,
               createdAt: new Date().toISOString(),
               reactions: {},
             },
-            ...s.kudos.filter((k) => !k.isDemo),
+            ...(s.cloud ? s.kudos : s.kudos.filter((k) => !k.isDemo)),
           ],
-        })),
+        }));
+        if (s.cloud) {
+          insertKudos({
+            id,
+            team_id: s.cloud.teamId,
+            to_id: toId,
+            message,
+            emoji,
+            color,
+          }).catch(logCloudError("insertKudos"));
+        }
+      },
 
-      toggleKudosReaction: (kudosId, emoji) =>
+      toggleKudosReaction: (kudosId, emoji) => {
         set((s) => {
           const userId = s.currentUserId;
           return {
@@ -192,27 +381,45 @@ export const useStore = create<AppState>()(
               return { ...k, reactions };
             }),
           };
-        }),
+        });
+        if (get().cloud) {
+          cloudToggleKudosReaction(kudosId, emoji).catch(
+            logCloudError("toggleKudosReaction"),
+          );
+        }
+      },
 
-      addPoll: ({ question, options }) =>
+      addPoll: ({ question, options }) => {
+        const s = get();
+        const id = uid();
+        const optionObjs = options
+          .filter((o) => o.trim().length > 0)
+          .map((text) => ({ id: uid(), text, votes: [] as string[] }));
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           polls: [
             {
-              id: uid(),
+              id,
               question,
-              options: options
-                .filter((o) => o.trim().length > 0)
-                .map((text) => ({ id: uid(), text, votes: [] })),
+              options: optionObjs,
               createdAt: new Date().toISOString(),
               closed: false,
               createdById: s.currentUserId,
             },
-            ...s.polls.filter((p) => !p.isDemo),
+            ...(s.cloud ? s.polls : s.polls.filter((p) => !p.isDemo)),
           ],
-        })),
+        }));
+        if (s.cloud) {
+          insertPoll({
+            id,
+            team_id: s.cloud.teamId,
+            question,
+            options: optionObjs.map((o) => ({ id: o.id, text: o.text })),
+          }).catch(logCloudError("insertPoll"));
+        }
+      },
 
-      voteOnPoll: (pollId, optionId) =>
+      voteOnPoll: (pollId, optionId) => {
         set((s) => {
           const userId = s.currentUserId;
           return {
@@ -232,50 +439,95 @@ export const useStore = create<AppState>()(
               };
             }),
           };
-        }),
+        });
+        if (get().cloud) {
+          castPollVote(pollId, optionId).catch(logCloudError("voteOnPoll"));
+        }
+      },
 
-      closePoll: (pollId) =>
+      closePoll: (pollId) => {
+        const poll = get().polls.find((p) => p.id === pollId);
+        if (!poll) return;
+        const next = !poll.closed;
         set((s) => ({
           polls: s.polls.map((p) =>
-            p.id === pollId ? { ...p, closed: !p.closed } : p,
+            p.id === pollId ? { ...p, closed: next } : p,
           ),
-        })),
+        }));
+        if (get().cloud) {
+          togglePollClosed(pollId, next).catch(logCloudError("closePoll"));
+        }
+      },
 
-      addNote: ({ title, content, color }) =>
+      addNote: ({ title, content, color }) => {
+        const s = get();
+        const id = uid();
+        const resolvedColor =
+          color ?? NOTE_COLORS[s.notes.length % NOTE_COLORS.length];
         set((s) => ({
-          ...stripDemoContent(s),
+          ...(s.cloud ? {} : stripDemoContent(s)),
           notes: [
             {
-              id: uid(),
+              id,
               title,
               content,
-              color: color ?? NOTE_COLORS[s.notes.length % NOTE_COLORS.length],
+              color: resolvedColor,
               pinned: false,
               authorId: s.currentUserId,
               updatedAt: new Date().toISOString(),
             },
-            ...s.notes.filter((n) => !n.isDemo),
+            ...(s.cloud ? s.notes : s.notes.filter((n) => !n.isDemo)),
           ],
-        })),
+        }));
+        if (s.cloud) {
+          insertNote({
+            id,
+            team_id: s.cloud.teamId,
+            title,
+            content,
+            color: resolvedColor,
+          }).catch(logCloudError("insertNote"));
+        }
+      },
 
-      updateNote: (id, patch) =>
+      updateNote: (id, patch) => {
         set((s) => ({
           notes: s.notes.map((n) =>
             n.id === id
               ? { ...n, ...patch, updatedAt: new Date().toISOString() }
               : n,
           ),
-        })),
+        }));
+        if (get().cloud) {
+          cloudUpdateNote(id, {
+            ...(patch.title !== undefined ? { title: patch.title } : {}),
+            ...(patch.content !== undefined ? { content: patch.content } : {}),
+            ...(patch.color !== undefined ? { color: patch.color } : {}),
+            ...(patch.pinned !== undefined ? { pinned: patch.pinned } : {}),
+          }).catch(logCloudError("updateNote"));
+        }
+      },
 
-      toggleNotePin: (id) =>
+      toggleNotePin: (id) => {
+        const note = get().notes.find((n) => n.id === id);
+        if (!note) return;
+        const next = !note.pinned;
         set((s) => ({
-          notes: s.notes.map((n) =>
-            n.id === id ? { ...n, pinned: !n.pinned } : n,
-          ),
-        })),
+          notes: s.notes.map((n) => (n.id === id ? { ...n, pinned: next } : n)),
+        }));
+        if (get().cloud) {
+          cloudUpdateNote(id, { pinned: next }).catch(
+            logCloudError("toggleNotePin"),
+          );
+        }
+      },
 
-      removeNote: (id) =>
-        set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
+      removeNote: (id) => {
+        set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
+        if (get().cloud) {
+          deleteNote(id).catch(logCloudError("removeNote"));
+        }
+      },
 
       clearDemoContent: () =>
         set((s) => ({
@@ -296,11 +548,31 @@ export const useStore = create<AppState>()(
           };
         }),
 
-      resetDemoData: () => set(initial()),
+      resetDemoData: () => {
+        if (get().cloud) return; // no-op in cloud mode
+        set(initial());
+      },
     }),
     {
       name: "teams-labo-state",
       version: SEED_VERSION,
+      partialize: (s) =>
+        s.cloud
+          ? // Cloud mode: don't persist team data. The server is the source
+            // of truth and useCloudSync rehydrates on mount. Persisting would
+            // cause a flash of stale data from the previous session on reload.
+            { version: s.version }
+          : {
+              // Don't persist cloud context (rebuilt on sign-in).
+              version: s.version,
+              currentUserId: s.currentUserId,
+              members: s.members,
+              tasks: s.tasks,
+              kudos: s.kudos,
+              polls: s.polls,
+              notes: s.notes,
+              demoMembersDismissed: s.demoMembersDismissed,
+            },
     },
   ),
 );
