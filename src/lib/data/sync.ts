@@ -43,14 +43,33 @@ export const useCloudSync = (
       }, 200);
     };
 
-    // Initial hydration.
+    // Initial hydration with bounded retry. Without this, a transient network
+    // blip would leave the HydrationGate stuck on the loading shell forever
+    // (it's gated on `cloudHydrated`, which is only flipped by `hydrate()`).
     (async () => {
-      try {
-        const snap = await fetchTeamSnapshot(teamId);
+      const maxAttempts = 4;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         if (cancelled) return;
-        useStore.getState().hydrate({ currentUserId: userId, ...snap });
-      } catch (err) {
-        console.error("teams-labo initial sync error", err);
+        try {
+          const snap = await fetchTeamSnapshot(teamId);
+          if (cancelled) return;
+          useStore.getState().hydrate({ currentUserId: userId, ...snap });
+          return;
+        } catch (err) {
+          console.error(
+            `teams-labo initial sync error (attempt ${attempt}/${maxAttempts})`,
+            err,
+          );
+          if (attempt === maxAttempts) {
+            if (cancelled) return;
+            const msg =
+              err instanceof Error ? err.message : "Supabase への接続に失敗しました";
+            useStore.getState().setCloudError(msg);
+            return;
+          }
+          const delayMs = 400 * 2 ** (attempt - 1); // 400ms, 800ms, 1600ms
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
       }
     })();
 

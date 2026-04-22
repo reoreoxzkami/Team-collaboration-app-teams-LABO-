@@ -84,6 +84,26 @@ export const AuthGate = ({ children }: Props) => {
  */
 const HydrationGate = ({ children }: { children: ReactNode }) => {
   const cloudHydrated = useStore((s) => s.cloudHydrated);
+  const cloudError = useStore((s) => s.cloudError);
+  if (cloudError) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">
+        <div className="glass-panel flex max-w-md flex-col gap-3 p-6 text-sm text-slate-700">
+          <div className="text-base font-semibold text-rose-600">
+            チームデータを取得できませんでした
+          </div>
+          <div className="text-xs text-slate-500 break-words">{cloudError}</div>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="self-start rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:opacity-90"
+          >
+            再読み込み
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (!cloudHydrated) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">

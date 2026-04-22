@@ -67,11 +67,15 @@ interface AppState {
   cloud: CloudContext | null;
   /** True once the active team's initial snapshot has arrived from Supabase. */
   cloudHydrated: boolean;
+  /** Set to a message when cloud hydration has failed after retries; null otherwise. */
+  cloudError: string | null;
 
   setCurrentUser: (id: string) => void;
 
   /** Switches to cloud mode (or back to local when null). */
   setCloudContext: (ctx: CloudContext | null) => void;
+  /** Surface a hydration failure to UI gates. */
+  setCloudError: (message: string | null) => void;
   /** Replace all data arrays from a Supabase snapshot. */
   hydrate: (snap: Snapshot) => void;
 
@@ -125,6 +129,7 @@ const initial = () => ({
   demoMembersDismissed: false,
   cloud: null as CloudContext | null,
   cloudHydrated: false,
+  cloudError: null as string | null,
 });
 
 /** Strip demo items from content arrays (keeps members intact). */
@@ -159,8 +164,14 @@ export const useStore = create<AppState>()(
         if (prev?.teamId === ctx?.teamId && prev?.userId === ctx?.userId) return;
         // Resetting hydration so callers can gate rendering until the first
         // snapshot lands. Cleared again when ctx becomes null (local mode).
-        set({ cloud: ctx, cloudHydrated: ctx ? false : true });
+        set({
+          cloud: ctx,
+          cloudHydrated: ctx ? false : true,
+          cloudError: null,
+        });
       },
+
+      setCloudError: (message) => set({ cloudError: message }),
 
       hydrate: (snap) =>
         set({
@@ -172,6 +183,7 @@ export const useStore = create<AppState>()(
           notes: snap.notes,
           demoMembersDismissed: true,
           cloudHydrated: true,
+          cloudError: null,
         }),
 
       updateMember: (id, patch) => {
@@ -197,10 +209,13 @@ export const useStore = create<AppState>()(
             status?: MemberStatus;
             current_mood_emoji?: string;
             current_mood_note?: string;
+            mood_updated_at?: string;
           } = {};
           if (patch.status !== undefined) tmPatch.status = patch.status;
           if (patch.mood !== undefined) tmPatch.current_mood_emoji = patch.mood;
           if (patch.moodNote !== undefined) tmPatch.current_mood_note = patch.moodNote;
+          if (patch.moodUpdatedAt !== undefined)
+            tmPatch.mood_updated_at = patch.moodUpdatedAt;
           if (Object.keys(tmPatch).length > 0) {
             updateMyTeamMember(s.cloud.teamId, tmPatch).catch(
               logCloudError("updateMyTeamMember"),
