@@ -23,11 +23,12 @@ export const useCloudSync = (
     let cancelled = false;
     useStore.getState().setCloudContext({ teamId, userId });
 
-    // Debounce refetches: many realtime events can arrive in a burst
-    // (e.g. closing a poll → poll update + poll_votes events).
+    // Trailing-edge debounce: coalesce bursts of realtime events (e.g. closing
+    // a poll yields poll update + many poll_votes events) into a single
+    // refetch fired once the burst has settled.
     let refreshTimer: ReturnType<typeof setTimeout> | null = null;
     const scheduleRefresh = () => {
-      if (refreshTimer) return;
+      if (refreshTimer) clearTimeout(refreshTimer);
       refreshTimer = setTimeout(async () => {
         refreshTimer = null;
         if (cancelled || !teamId) return;

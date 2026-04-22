@@ -205,13 +205,16 @@ export const castPollVote = async (pollId: string, optionId: string) => {
     return;
   }
 
+  // Switching to a different option: delete-then-insert so we don't rely on
+  // an UPDATE RLS policy on poll_votes (which the schema intentionally
+  // omits — votes are effectively immutable per (poll_id,user_id) pair and
+  // changing a vote is modeled as remove+add).
   if (existing) {
-    const { error } = await sb
+    const { error: delErr } = await sb
       .from("poll_votes")
-      .update({ option_id: optionId })
+      .delete()
       .eq("id", existing.id);
-    if (error) throw error;
-    return;
+    if (delErr) throw delErr;
   }
 
   const { error } = await sb.from("poll_votes").insert({

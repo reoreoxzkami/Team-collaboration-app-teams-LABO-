@@ -170,8 +170,12 @@ export const useStore = create<AppState>()(
 
       updateMember: (id, patch) => {
         const s = get();
+        if (s.cloud && id !== s.cloud.userId) return; // can only update self in cloud mode
+        // Optimistic local update for all modes.
+        set((s) => ({
+          members: s.members.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+        }));
         if (s.cloud) {
-          if (id !== s.cloud.userId) return; // can only update self in cloud mode
           const profilePatch: {
             display_name?: string;
             avatar_emoji?: string;
@@ -196,11 +200,7 @@ export const useStore = create<AppState>()(
               logCloudError("updateMyTeamMember"),
             );
           }
-          return;
         }
-        set((s) => ({
-          members: s.members.map((m) => (m.id === id ? { ...m, ...patch } : m)),
-        }));
       },
 
       setMemberStatus: (id, status) => {
@@ -526,17 +526,23 @@ export const useStore = create<AppState>()(
     {
       name: "teams-labo-state",
       version: SEED_VERSION,
-      partialize: (s) => ({
-        // Don't persist cloud context (rebuilt on sign-in).
-        version: s.version,
-        currentUserId: s.currentUserId,
-        members: s.members,
-        tasks: s.tasks,
-        kudos: s.kudos,
-        polls: s.polls,
-        notes: s.notes,
-        demoMembersDismissed: s.demoMembersDismissed,
-      }),
+      partialize: (s) =>
+        s.cloud
+          ? // Cloud mode: don't persist team data. The server is the source
+            // of truth and useCloudSync rehydrates on mount. Persisting would
+            // cause a flash of stale data from the previous session on reload.
+            { version: s.version }
+          : {
+              // Don't persist cloud context (rebuilt on sign-in).
+              version: s.version,
+              currentUserId: s.currentUserId,
+              members: s.members,
+              tasks: s.tasks,
+              kudos: s.kudos,
+              polls: s.polls,
+              notes: s.notes,
+              demoMembersDismissed: s.demoMembersDismissed,
+            },
     },
   ),
 );
