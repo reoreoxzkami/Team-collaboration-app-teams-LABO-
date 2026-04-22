@@ -192,12 +192,13 @@ export const castPollVote = async (pollId: string, optionId: string) => {
   if (!auth.user) throw new Error("not signed in");
 
   // Check if user has existing vote on this option → toggle off.
-  const { data: existing } = await sb
+  const { data: existing, error: selErr } = await sb
     .from("poll_votes")
     .select("id, option_id")
     .eq("poll_id", pollId)
     .eq("user_id", auth.user.id)
     .maybeSingle();
+  if (selErr) throw selErr;
 
   if (existing && existing.option_id === optionId) {
     const { error } = await sb.from("poll_votes").delete().eq("id", existing.id);

@@ -162,12 +162,21 @@ export const useStore = create<AppState>()(
       setCloudContext: (ctx) => {
         const prev = get().cloud;
         if (prev?.teamId === ctx?.teamId && prev?.userId === ctx?.userId) return;
-        // Resetting hydration so callers can gate rendering until the first
-        // snapshot lands. Cleared again when ctx becomes null (local mode).
+        // Reset team-scoped arrays when entering or leaving cloud mode so the
+        // previous team's data can't leak into localStorage or briefly render
+        // during a team switch (TeamChooser is shown while ctx is null, and
+        // HydrationGate blocks until the next snapshot lands).
+        const seed = initial();
         set({
           cloud: ctx,
           cloudHydrated: ctx ? false : true,
           cloudError: null,
+          members: seed.members,
+          tasks: seed.tasks,
+          kudos: seed.kudos,
+          polls: seed.polls,
+          notes: seed.notes,
+          currentUserId: ctx?.userId ?? seed.currentUserId,
         });
       },
 
