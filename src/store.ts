@@ -65,6 +65,8 @@ interface AppState {
 
   /** When set, mutations write to Supabase instead of local state. */
   cloud: CloudContext | null;
+  /** True once the active team's initial snapshot has arrived from Supabase. */
+  cloudHydrated: boolean;
 
   setCurrentUser: (id: string) => void;
 
@@ -122,6 +124,7 @@ const initial = () => ({
   notes: seedNotes(),
   demoMembersDismissed: false,
   cloud: null as CloudContext | null,
+  cloudHydrated: false,
 });
 
 /** Strip demo items from content arrays (keeps members intact). */
@@ -154,7 +157,9 @@ export const useStore = create<AppState>()(
       setCloudContext: (ctx) => {
         const prev = get().cloud;
         if (prev?.teamId === ctx?.teamId && prev?.userId === ctx?.userId) return;
-        set({ cloud: ctx });
+        // Resetting hydration so callers can gate rendering until the first
+        // snapshot lands. Cleared again when ctx becomes null (local mode).
+        set({ cloud: ctx, cloudHydrated: ctx ? false : true });
       },
 
       hydrate: (snap) =>
@@ -166,6 +171,7 @@ export const useStore = create<AppState>()(
           polls: snap.polls,
           notes: snap.notes,
           demoMembersDismissed: true,
+          cloudHydrated: true,
         }),
 
       updateMember: (id, patch) => {

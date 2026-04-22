@@ -3,6 +3,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { isSupabaseConfigured } from "../../lib/supabase";
 import { useCloudSync } from "../../lib/data/sync";
 import { TeamContext, type ActiveTeam } from "../../lib/team-context";
+import { useStore } from "../../store";
 import { LoginPage } from "./LoginPage";
 import { TeamChooser } from "./TeamChooser";
 
@@ -71,7 +72,26 @@ export const AuthGate = ({ children }: Props) => {
 
   return (
     <TeamContext.Provider value={{ activeTeam, setActiveTeam }}>
-      {children}
+      <HydrationGate>{children}</HydrationGate>
     </TeamContext.Provider>
   );
+};
+
+/**
+ * Holds children behind the loading shell until the store's first cloud
+ * snapshot has arrived, so the app never flashes seed / demo data while
+ * connected to a real team.
+ */
+const HydrationGate = ({ children }: { children: ReactNode }) => {
+  const cloudHydrated = useStore((s) => s.cloudHydrated);
+  if (!cloudHydrated) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">
+        <div className="glass-panel px-5 py-3 text-sm text-slate-600">
+          チームデータを読み込み中…
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
 };
