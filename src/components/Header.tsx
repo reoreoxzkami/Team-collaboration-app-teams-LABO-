@@ -1,11 +1,15 @@
-import { RotateCcw } from "lucide-react";
+import { LogOut, RotateCcw } from "lucide-react";
 import { useStore } from "../store";
 import { Avatar } from "./Avatar";
 import { StatusDot } from "./StatusDot";
+import { useAuth } from "../hooks/useAuth";
+import { signOut } from "../lib/auth";
+import { isSupabaseConfigured } from "../lib/supabase";
 
 export const Header = () => {
   const { members, currentUserId, setCurrentUser, resetDemoData } = useStore();
   const me = members.find((m) => m.id === currentUserId);
+  const { user } = useAuth();
 
   return (
     <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -40,6 +44,24 @@ export const Header = () => {
           <RotateCcw className="h-4 w-4" />
           <span className="hidden sm:inline">リセット</span>
         </button>
+
+        {isSupabaseConfigured && user && (
+          <button
+            onClick={() => {
+              if (confirm("サインアウトしますか？")) {
+                signOut().then(() => {
+                  window.localStorage.removeItem("teams-labo-active-team");
+                  window.location.reload();
+                });
+              }
+            }}
+            className="btn-ghost"
+            title={user.email ?? "サインアウト"}
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">サインアウト</span>
+          </button>
+        )}
 
         <div className="glass-panel flex items-center gap-2 py-1.5 pl-1.5 pr-3">
           <Avatar member={me} size="md" ring />

@@ -8,6 +8,9 @@ import { KudosWall } from "./components/KudosWall";
 import { MoodCheckin } from "./components/MoodCheckin";
 import { Polls } from "./components/Polls";
 import { Notes } from "./components/Notes";
+import { DemoBanner } from "./components/DemoBanner";
+import { AuthGate } from "./components/auth/AuthGate";
+import { usePageTitle } from "./lib/seo";
 import type { View } from "./types";
 
 const VIEW_META: Record<View, { title: string; sub: string }> = {
@@ -31,32 +34,37 @@ const App = () => {
     window.location.hash = view;
   }, [view]);
 
+  usePageTitle(VIEW_META[view].title);
+
   return (
-    <div className="mx-auto flex max-w-[1400px] gap-6 px-4 py-4 lg:px-6 lg:py-6">
-      <Sidebar view={view} onSelect={setView} />
+    <AuthGate>
+      <div className="mx-auto flex max-w-[1400px] gap-6 px-4 py-4 lg:px-6 lg:py-6">
+        <Sidebar view={view} onSelect={setView} />
 
-      <main className="min-w-0 flex-1 pb-24 lg:pb-6">
-        <Header />
-        <div className="mb-5 flex items-center gap-3">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-widest text-brand-500">
-              {VIEW_META[view].title}
+        <main className="min-w-0 flex-1 pb-24 lg:pb-6">
+          <Header />
+          <DemoBanner />
+          <div className="mb-5 flex items-center gap-3">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest text-brand-500">
+                {VIEW_META[view].title}
+              </div>
+              <div className="text-sm text-slate-500">{VIEW_META[view].sub}</div>
             </div>
-            <div className="text-sm text-slate-500">{VIEW_META[view].sub}</div>
           </div>
-        </div>
 
-        {view === "dashboard" && <Dashboard onNavigate={setView} />}
-        {view === "members" && <Members />}
-        {view === "tasks" && <TaskBoard />}
-        {view === "kudos" && <KudosWall />}
-        {view === "mood" && <MoodCheckin />}
-        {view === "polls" && <Polls />}
-        {view === "notes" && <Notes />}
-      </main>
+          {view === "dashboard" && <Dashboard onNavigate={setView} />}
+          {view === "members" && <Members />}
+          {view === "tasks" && <TaskBoard />}
+          {view === "kudos" && <KudosWall />}
+          {view === "mood" && <MoodCheckin />}
+          {view === "polls" && <Polls />}
+          {view === "notes" && <Notes />}
+        </main>
 
-      <MobileTabBar view={view} onSelect={setView} />
-    </div>
+        <MobileTabBar view={view} onSelect={setView} />
+      </div>
+    </AuthGate>
   );
 };
 

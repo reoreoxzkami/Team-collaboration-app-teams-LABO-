@@ -10,6 +10,7 @@ export interface Member {
   mood: string;
   moodNote: string;
   moodUpdatedAt: string;
+  isDemo?: boolean;
 }
 
 export type TaskStatus = "todo" | "doing" | "review" | "done";
@@ -24,6 +25,7 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string | null;
   createdAt: string;
+  isDemo?: boolean;
 }
 
 export interface Kudos {
@@ -35,6 +37,7 @@ export interface Kudos {
   color: string;
   createdAt: string;
   reactions: Record<string, string[]>;
+  isDemo?: boolean;
 }
 
 export interface PollOption {
@@ -50,6 +53,7 @@ export interface Poll {
   createdAt: string;
   closed: boolean;
   createdById: string;
+  isDemo?: boolean;
 }
 
 export interface Note {
@@ -60,6 +64,7 @@ export interface Note {
   pinned: boolean;
   authorId: string;
   updatedAt: string;
+  isDemo?: boolean;
 }
 
 export type View =
