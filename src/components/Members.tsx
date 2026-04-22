@@ -1,6 +1,7 @@
 import { useStore } from "../store";
 import { Avatar } from "./Avatar";
-import { StatusDot, statusLabel } from "./StatusDot";
+import { StatusDot } from "./StatusDot";
+import { statusLabel } from "../lib/status";
 import type { MemberStatus } from "../types";
 import { timeAgo } from "../lib/time";
 
