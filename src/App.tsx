@@ -31,6 +31,15 @@ const App = () => {
   });
 
   useEffect(() => {
+    const current = window.location.hash.replace(/^#/, "");
+    // While the URL fragment still carries OAuth callback data
+    // (access_token, refresh_token, error, ...), leave it untouched so the
+    // Supabase client can parse it via detectSessionInUrl. Overwriting it
+    // here would silently discard the session and bounce users back to login.
+    if (/(^|&)(access_token|refresh_token|provider_token|error|error_description|error_code)=/.test(current)) {
+      return;
+    }
+    if (current === view) return;
     window.location.hash = view;
   }, [view]);
 
