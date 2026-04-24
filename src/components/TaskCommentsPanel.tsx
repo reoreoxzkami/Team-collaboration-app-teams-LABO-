@@ -26,13 +26,13 @@ const getMentionToken = (value: string, caretPos: number) => {
       start: upto.length - bracket[1].length - 2,
     };
   }
-  const match = /(?:^|\s)@([^\s@\[\]]*)$/.exec(upto);
+  const match = /(?:^|\s)@([^\s@[\]]*)$/.exec(upto);
   if (!match) return null;
   return { token: match[1], start: upto.length - match[1].length - 1 };
 };
 
 /** Matches either `@[multi word name]` or `@singleword` (no brackets). */
-const MENTION_RE = /@\[([^\]]+)\]|@([^\s@\[\]]+)/g;
+const MENTION_RE = /@\[([^\]]+)\]|@([^\s@[\]]+)/g;
 
 const renderBody = (body: string, members: Member[]) => {
   const byName = new Map(members.map((m) => [m.name.toLowerCase(), m]));
