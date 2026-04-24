@@ -86,19 +86,19 @@ export const Notes = () => {
               )}
               <EditableField
                 value={n.title}
-                className="font-display text-lg font-extrabold text-slate-800"
+                className="font-display text-lg font-extrabold text-ink-primary"
                 placeholder="タイトル"
                 onChange={(v) => updateNote(n.id, { title: v })}
               />
               <EditableField
                 value={n.content}
                 as="textarea"
-                className="mt-2 whitespace-pre-wrap text-sm text-slate-700"
+                className="mt-2 whitespace-pre-wrap text-sm text-ink-secondary"
                 placeholder="内容を入力..."
                 onChange={(v) => updateNote(n.id, { content: v })}
               />
 
-              <div className="mt-4 flex items-center justify-between text-xs text-slate-600">
+              <div className="mt-4 flex items-center justify-between text-xs text-ink-tertiary">
                 <div>
                   {author?.emoji} {author?.name} ・ {timeAgo(n.updatedAt)}
                 </div>
@@ -187,7 +187,7 @@ const EditableField = ({
         setEditing(true);
       }}
     >
-      {value || <span className="text-slate-400">{placeholder}</span>}
+      {value || <span className="text-ink-tertiary">{placeholder}</span>}
     </div>
   );
 };

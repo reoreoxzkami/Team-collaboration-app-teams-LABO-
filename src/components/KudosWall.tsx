@@ -139,7 +139,7 @@ export const KudosWall = () => {
           );
         })}
         {kudos.length === 0 && (
-          <div className="glass-card p-6 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3">
+          <div className="glass-card p-6 text-center text-sm text-ink-secondary md:col-span-2 xl:col-span-3">
             まだKudosがありません。最初の感謝を贈ろう ✨
           </div>
         )}

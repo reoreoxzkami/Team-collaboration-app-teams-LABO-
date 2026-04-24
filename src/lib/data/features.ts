@@ -91,11 +91,16 @@ export const insertTaskComment = async (input: {
   mentions: string[];
 }): Promise<TaskComment> => {
   const sb = must();
-  const { data, error } = await sb.rpc("insert_task_comment", {
-    p_task_id: input.taskId,
-    p_body: input.body,
-    p_mentions: input.mentions,
-  });
+  // `.single()` so PostgREST returns a row object rather than a one-element
+  // array for this composite-returning RPC (mirrors the pattern used in
+  // TeamChooser.tsx for create_team / join_team).
+  const { data, error } = await sb
+    .rpc("insert_task_comment", {
+      p_task_id: input.taskId,
+      p_body: input.body,
+      p_mentions: input.mentions,
+    })
+    .single();
   if (error) throw error;
   return taskCommentFromRow(data as TaskCommentRow);
 };

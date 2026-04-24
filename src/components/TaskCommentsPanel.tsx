@@ -170,7 +170,14 @@ export const TaskCommentsPanel = ({ task, onClose }: Props) => {
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        completeMention(mentionCandidates[mentionHighlight].name);
+        // Clamp: candidate list may have shrunk since the highlight was set
+        // (e.g. realtime member removal, token narrowing). Falling through
+        // to `mentionCandidates[mentionHighlight]` would be undefined.
+        const idx = Math.min(
+          mentionHighlight,
+          mentionCandidates.length - 1,
+        );
+        completeMention(mentionCandidates[idx].name);
         return;
       }
       if (e.key === "Escape") {
