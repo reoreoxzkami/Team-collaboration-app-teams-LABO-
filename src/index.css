@@ -310,6 +310,16 @@
   }
 
   /* =================
+     Keyboard chip
+     ================= */
+  .kbd {
+    @apply inline-flex min-w-[1.25rem] items-center justify-center rounded-md px-1.5 py-0.5 text-[11px] font-mono font-bold text-ink-secondary;
+    background: rgb(var(--glass-bg) / 1);
+    border: 1px solid rgb(var(--c-line) / 1);
+    box-shadow: 0 1px 0 0 rgb(var(--c-line) / 1);
+  }
+
+  /* =================
      Misc
      ================= */
   .hide-scrollbar::-webkit-scrollbar {

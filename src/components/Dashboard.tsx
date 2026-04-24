@@ -12,6 +12,7 @@ import { Avatar } from "./Avatar";
 import { StatusDot } from "./StatusDot";
 import { timeAgo } from "../lib/time";
 import type { View } from "../types";
+import { DashboardStats } from "./DashboardStats";
 
 const StatCard = ({
   label,
@@ -98,6 +99,8 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
           icon={<StickyNote className="h-6 w-6" />}
         />
       </div>
+
+      <DashboardStats />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <section className="glass-card col-span-1 p-5 xl:col-span-2">

@@ -42,6 +42,7 @@ export const fetchTeamSnapshot = async (
       .from("tasks")
       .select("*")
       .eq("team_id", teamId)
+      .order("sort_order", { ascending: false })
       .order("created_at", { ascending: false }),
     sb
       .from("kudos")

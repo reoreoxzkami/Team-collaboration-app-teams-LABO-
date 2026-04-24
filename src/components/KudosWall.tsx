@@ -3,6 +3,7 @@ import { Send } from "lucide-react";
 import { useStore } from "../store";
 import { Avatar } from "./Avatar";
 import { timeAgo } from "../lib/time";
+import { EmptyState } from "./EmptyState";
 
 const QUICK_EMOJIS = ["🎉", "🙌", "💖", "🚀", "🔥", "🌟", "💡", "☕", "🍀"];
 const REACT_EMOJIS = ["👏", "🎉", "❤️", "🔥", "🚀"];
@@ -139,8 +140,12 @@ export const KudosWall = () => {
           );
         })}
         {kudos.length === 0 && (
-          <div className="glass-card p-6 text-center text-sm text-ink-secondary md:col-span-2 xl:col-span-3">
-            まだKudosがありません。最初の感謝を贈ろう ✨
+          <div className="md:col-span-2 xl:col-span-3">
+            <EmptyState
+              art="kudos"
+              title="まだKudosがありません"
+              description="小さな感謝も、積み重ねればチームの文化になる。最初の一人になろう。"
+            />
           </div>
         )}
       </div>

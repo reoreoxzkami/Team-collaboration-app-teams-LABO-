@@ -24,6 +24,8 @@ export interface Task {
   assigneeId: string | null;
   priority: TaskPriority;
   dueDate: string | null;
+  tags: string[];
+  sortOrder: number;
   createdAt: string;
   isDemo?: boolean;
 }

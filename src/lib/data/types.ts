@@ -42,6 +42,8 @@ export interface TaskRow {
   priority: DbTaskPriority;
   assignee_id: string | null;
   due_date: string | null;
+  tags: string[];
+  sort_order: number;
   created_by: string;
   created_at: string;
   updated_at: string;

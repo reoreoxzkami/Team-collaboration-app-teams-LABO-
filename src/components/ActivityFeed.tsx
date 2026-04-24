@@ -12,6 +12,7 @@ import { motion } from "framer-motion";
 import { useStore } from "../store";
 import { useActivity } from "../hooks/useActivity";
 import { SkeletonCard } from "./ui/Skeleton";
+import { EmptyState } from "./EmptyState";
 import type { ActivityEvent, ActivityKind, Member } from "../types";
 
 const KIND_META: Record<
@@ -159,15 +160,11 @@ export const ActivityFeed = () => {
 
   if (events.length === 0) {
     return (
-      <div className="glass-card p-8 text-center">
-        <ActivityIcon className="mx-auto mb-3 h-8 w-8 text-ink-tertiary" />
-        <div className="font-display text-lg font-bold text-ink-primary">
-          まだ動きはありません
-        </div>
-        <p className="mt-2 text-sm text-ink-secondary">
-          タスクを追加したり、Kudos を贈ったり、投票を作ると、ここにタイムラインが流れます。
-        </p>
-      </div>
+      <EmptyState
+        art="activity"
+        title="まだ動きはありません"
+        description="タスクを追加したり、Kudos を贈ったり、投票を作ると、ここにタイムラインが流れます。"
+      />
     );
   }
 

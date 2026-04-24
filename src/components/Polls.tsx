@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Lock, Unlock, Trash2 } from "lucide-react";
 import { useStore } from "../store";
 import { timeAgo } from "../lib/time";
+import { EmptyState } from "./EmptyState";
 
 export const Polls = () => {
   const { polls, members, currentUserId, addPoll, voteOnPoll, closePoll } =
@@ -171,8 +172,12 @@ export const Polls = () => {
           );
         })}
         {polls.length === 0 && (
-          <div className="glass-card p-6 text-center text-sm text-ink-secondary lg:col-span-2">
-            まだ投票がありません。
+          <div className="lg:col-span-2">
+            <EmptyState
+              art="polls"
+              title="まだ投票がありません"
+              description="チームの意見を一瞬で可視化。最初の質問を投げかけよう。"
+            />
           </div>
         )}
       </div>

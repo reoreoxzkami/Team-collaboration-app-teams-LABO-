@@ -67,6 +67,8 @@ export const taskFromRow = (r: TaskRow): Task => ({
   assigneeId: r.assignee_id,
   priority: r.priority,
   dueDate: r.due_date,
+  tags: r.tags ?? [],
+  sortOrder: typeof r.sort_order === "number" ? r.sort_order : 0,
   createdAt: r.created_at,
 });
 

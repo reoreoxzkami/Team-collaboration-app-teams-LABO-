@@ -11,24 +11,40 @@ interface Props {
   onClose: () => void;
 }
 
-/** Resolve the token immediately before the caret that starts with `@`. */
+/**
+ * Resolve the token immediately before the caret that starts with `@`.
+ * Supports both bracket form (`@[山田 太郎`) for multi-word names and the
+ * plain form (`@john`) for single-word names.
+ */
 const getMentionToken = (value: string, caretPos: number) => {
   const upto = value.slice(0, caretPos);
-  const match = /(?:^|\s)@([^\s@]*)$/.exec(upto);
+  const bracket = /(?:^|\s)@\[([^\]]*)$/.exec(upto);
+  if (bracket) {
+    return {
+      token: bracket[1],
+      // `@[` is 2 characters before the token contents.
+      start: upto.length - bracket[1].length - 2,
+    };
+  }
+  const match = /(?:^|\s)@([^\s@\[\]]*)$/.exec(upto);
   if (!match) return null;
   return { token: match[1], start: upto.length - match[1].length - 1 };
 };
+
+/** Matches either `@[multi word name]` or `@singleword` (no brackets). */
+const MENTION_RE = /@\[([^\]]+)\]|@([^\s@\[\]]+)/g;
 
 const renderBody = (body: string, members: Member[]) => {
   const byName = new Map(members.map((m) => [m.name.toLowerCase(), m]));
   // Split on @mentions; highlight tokens that match a member name.
   const parts: (string | { name: string; member?: Member })[] = [];
-  const regex = /@([^\s@]+)/g;
+  const regex = new RegExp(MENTION_RE.source, "g");
   let lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(body)) !== null) {
     if (m.index > lastIndex) parts.push(body.slice(lastIndex, m.index));
-    parts.push({ name: m[1], member: byName.get(m[1].toLowerCase()) });
+    const name = m[1] ?? m[2];
+    parts.push({ name, member: byName.get(name.toLowerCase()) });
     lastIndex = regex.lastIndex;
   }
   if (lastIndex < body.length) parts.push(body.slice(lastIndex));
@@ -103,11 +119,12 @@ export const TaskCommentsPanel = ({ task, onClose }: Props) => {
 
   const resolveMentions = (text: string): string[] => {
     const ids = new Set<string>();
-    const re = /@([^\s@]+)/g;
+    const re = new RegExp(MENTION_RE.source, "g");
     let m: RegExpExecArray | null;
     const byName = new Map(members.map((x) => [x.name.toLowerCase(), x]));
     while ((m = re.exec(text)) !== null) {
-      const hit = byName.get(m[1].toLowerCase());
+      const name = m[1] ?? m[2];
+      const hit = byName.get(name.toLowerCase());
       if (hit && hit.id !== user?.id) ids.add(hit.id);
     }
     return [...ids];
@@ -127,14 +144,16 @@ export const TaskCommentsPanel = ({ task, onClose }: Props) => {
     const caret = inputRef.current.selectionStart ?? body.length;
     const before = body.slice(0, start);
     const after = body.slice(caret);
-    const next = `${before}@${name} ${after}`;
+    // Multi-word names need bracket form so regexes can capture them whole.
+    const token = /\s/.test(name) ? `@[${name}] ` : `@${name} `;
+    const next = `${before}${token}${after}`;
     setBody(next);
     setMentionTok(null);
     // Restore focus + caret.
     requestAnimationFrame(() => {
       if (!inputRef.current) return;
       inputRef.current.focus();
-      const pos = (before + `@${name} `).length;
+      const pos = (before + token).length;
       inputRef.current.setSelectionRange(pos, pos);
     });
   };
