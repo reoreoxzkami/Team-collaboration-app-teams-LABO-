@@ -27,17 +27,23 @@
     --c-line: 226 232 240; /* slate-200 */
     --c-line-strong: 203 213 225; /* slate-300 */
 
-    /* Body backdrop gradient stops */
-    --bg-stop-1: #fbcfe8;
-    --bg-stop-2: #c7d2fe;
-    --bg-stop-3: #bae6fd;
-    --bg-base-1: #fef9ff;
-    --bg-base-2: #f5f7ff;
-    --bg-base-3: #eefcff;
+    /* Body backdrop gradient stops — LABO signature (coral → violet → cyan) */
+    --bg-stop-1: #ffd6e2;
+    --bg-stop-2: #d8ccff;
+    --bg-stop-3: #c0f0ff;
+    --bg-base-1: #fff7fb;
+    --bg-base-2: #f6f4ff;
+    --bg-base-3: #eafbff;
+
+    /* Signature brand + accent — mirrored from tailwind so CSS can reach them
+       without classnames (used for ring, caret, selection, etc). */
+    --c-brand-500: 122 77 255;
+    --c-signal-500: 255 47 100;
+    --c-accent-cyan: 0 212 255;
 
     /* Glass */
     --glass-bg: 255 255 255;
-    --glass-bg-alpha: 0.7;
+    --glass-bg-alpha: 0.72;
     --glass-border: 255 255 255;
     --glass-border-alpha: 0.6;
   }
@@ -58,14 +64,18 @@
     --c-line: 51 60 82;
     --c-line-strong: 71 82 108;
 
-    --bg-stop-1: #4c1d95;
-    --bg-stop-2: #1e3a8a;
-    --bg-stop-3: #0f172a;
-    --bg-base-1: #0b0f1a;
-    --bg-base-2: #0e1326;
-    --bg-base-3: #0a1020;
+    --bg-stop-1: #3b0f5f;
+    --bg-stop-2: #1a1b6b;
+    --bg-stop-3: #062132;
+    --bg-base-1: #0a0b1a;
+    --bg-base-2: #0d0f26;
+    --bg-base-3: #080a18;
 
-    --glass-bg: 22 27 43;
+    --c-brand-500: 147 115 255;
+    --c-signal-500: 255 95 133;
+    --c-accent-cyan: 0 212 255;
+
+    --glass-bg: 22 24 44;
     --glass-bg-alpha: 0.72;
     --glass-border: 255 255 255;
     --glass-border-alpha: 0.08;
@@ -95,15 +105,54 @@
     background-blend-mode: screen;
   }
 
+  /* LABO signature aurora orbs — slow drifting color fields that give the
+     background an alive, laboratory feel without distracting from content.
+     Sits behind everything (pointer-events: none; z-index: -1). */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -20vh -20vw;
+    background:
+      radial-gradient(42% 48% at 22% 18%, rgb(var(--c-signal-500) / 0.35), transparent 70%),
+      radial-gradient(36% 42% at 78% 14%, rgb(var(--c-brand-500) / 0.32), transparent 72%),
+      radial-gradient(46% 50% at 60% 92%, rgb(var(--c-accent-cyan) / 0.28), transparent 70%);
+    filter: blur(60px) saturate(125%);
+    pointer-events: none;
+    z-index: -2;
+    animation: aurora-drift 28s ease-in-out infinite;
+  }
+  .dark body::before {
+    filter: blur(70px) saturate(140%) brightness(0.85);
+  }
+
+  /* Subtle film grain so surfaces feel tactile, not flat digital. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: theme("backgroundImage.grain");
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .dark body::after { opacity: 0.35; }
+
   ::selection {
-    @apply bg-brand-300/60 text-brand-900;
+    background: rgb(var(--c-brand-500) / 0.35);
+    color: rgb(var(--c-ink-primary));
+  }
+
+  /* Brand-colored caret where supported, without overriding text color. */
+  input, textarea, [contenteditable="true"] {
+    caret-color: rgb(var(--c-brand-500));
   }
 
   *:focus-visible {
     outline: none;
     box-shadow:
       0 0 0 2px rgb(var(--c-surface-base)),
-      0 0 0 4px rgb(var(--c-ink-primary) / 0.35);
+      0 0 0 4px rgb(var(--c-brand-500) / 0.45);
     /* Inherit each element's own radius so the ring follows it correctly. */
     border-radius: inherit;
   }
@@ -172,10 +221,10 @@
   .gradient-text {
     background: linear-gradient(
       120deg,
-      #ec4899 0%,
-      #8b5cf6 35%,
-      #3b82f6 70%,
-      #14b8a6 100%
+      #ff2f64 0%,
+      #c96bff 35%,
+      #7a4dff 65%,
+      #00d4ff 100%
     );
     background-size: 200% 200%;
     -webkit-background-clip: text;
@@ -210,11 +259,11 @@
     border-radius: inherit;
     background: linear-gradient(
       135deg,
-      #f472b6,
-      #a78bfa,
-      #60a5fa,
-      #34d399,
-      #fbbf24
+      #ff5fa2,
+      #c96bff,
+      #7a4dff,
+      #00d4ff,
+      #2df0b1
     );
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
@@ -238,12 +287,36 @@
 
   .btn-primary {
     @apply btn text-white;
-    background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 60%, #3b82f6 100%);
-    box-shadow: 0 12px 30px -12px rgba(139, 92, 246, 0.55);
+    background:
+      linear-gradient(135deg, #ff2f64 0%, #7a4dff 55%, #4b5dff 100%);
+    box-shadow:
+      0 10px 30px -12px rgba(122, 77, 255, 0.55),
+      0 14px 36px -18px rgba(255, 47, 100, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    isolation: isolate;
+  }
+  /* Subtle inner highlight band — reads as a premium glossy CTA. */
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0) 55%
+    );
+    pointer-events: none;
+    z-index: -1;
   }
   .btn-primary:hover {
-    filter: brightness(1.06);
+    filter: brightness(1.07) saturate(1.05);
     transform: translateY(-1px);
+    box-shadow:
+      0 14px 38px -12px rgba(122, 77, 255, 0.6),
+      0 18px 44px -18px rgba(255, 47, 100, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
   }
   .btn-primary:active {
     transform: translateY(0);
@@ -282,8 +355,8 @@
   }
   .input:focus {
     outline: none;
-    border-color: #a78bfa;
-    box-shadow: 0 0 0 3px rgb(167 139 250 / 0.3);
+    border-color: rgb(var(--c-brand-500));
+    box-shadow: 0 0 0 3px rgb(var(--c-brand-500) / 0.28);
   }
 
   /* =================
@@ -349,12 +422,49 @@
     inset: -20%;
     background: radial-gradient(
       closest-side,
-      rgba(236, 72, 153, 0.35),
-      rgba(139, 92, 246, 0.25) 35%,
+      rgba(255, 47, 100, 0.35),
+      rgba(122, 77, 255, 0.3) 35%,
       transparent 70%
     );
     filter: blur(40px);
     z-index: -1;
     pointer-events: none;
+  }
+
+  /* ===================================================
+     LABO signature mark
+     A ring of coral/violet/cyan that slowly revolves,
+     used around the brand logo and hero cards.
+     =================================================== */
+  .aurora-ring {
+    position: relative;
+    isolation: isolate;
+  }
+  .aurora-ring::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from 0deg,
+      #ff2f64,
+      #c96bff,
+      #7a4dff,
+      #00d4ff,
+      #2df0b1,
+      #ffc24b,
+      #ff2f64
+    );
+    filter: blur(1px);
+    z-index: -1;
+    animation: logo-spin 18s linear infinite;
+  }
+  .aurora-ring::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgb(var(--c-surface-raised));
+    z-index: -1;
   }
 }

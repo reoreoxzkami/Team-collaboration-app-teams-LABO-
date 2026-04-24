@@ -86,17 +86,47 @@ const HydrationGate = ({ children }: { children: ReactNode }) => {
   const cloudHydrated = useStore((s) => s.cloudHydrated);
   const cloudError = useStore((s) => s.cloudError);
   if (cloudError) {
+    // Detect the two most likely root causes so we can show actionable guidance
+    // instead of just the raw Postgres message.
+    const looksLikeMissingColumn =
+      /column .* does not exist|PGRST204|42703|sort_order|tags|due_date/i.test(cloudError);
+    const looksLikeMissingTable =
+      /relation .* does not exist|PGRST205|42P01|does not exist.*table/i.test(cloudError);
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center">
-        <div className="glass-panel flex max-w-md flex-col gap-3 p-6 text-sm text-ink-secondary">
-          <div className="text-base font-semibold text-rose-500">
-            チームデータを取得できませんでした
+      <div className="flex min-h-[100dvh] items-center justify-center px-4">
+        <div className="glass-card flex max-w-lg flex-col gap-4 p-7 text-sm text-ink-secondary">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-signal-500 to-brand-600" />
+            <div className="display-h2">チームデータを取得できませんでした</div>
           </div>
-          <div className="text-xs text-ink-tertiary break-words">{cloudError}</div>
+          <div className="rounded-xl bg-surface-sunken p-3 font-mono text-[11px] text-ink-tertiary break-words">
+            {cloudError}
+          </div>
+          {looksLikeMissingColumn && (
+            <div className="rounded-xl bg-brand-50 p-3 text-xs text-brand-900 ring-1 ring-brand-500/20 dark:bg-brand-500/10 dark:text-brand-100">
+              <div className="mb-1 font-bold">原因の可能性: Supabase マイグレーションが未適用</div>
+              <div>
+                PR #9 で追加された <span className="font-mono">tags / sort_order / due_date</span> 列が Supabase に存在しない可能性があります。
+                Supabase SQL Editor で
+                <span className="mx-1 rounded bg-brand-500/20 px-1.5 py-0.5 font-mono">supabase/migrations/0004_task_tags_sort.sql</span>
+                を実行してからもう一度お試しください。
+              </div>
+            </div>
+          )}
+          {looksLikeMissingTable && (
+            <div className="rounded-xl bg-brand-50 p-3 text-xs text-brand-900 ring-1 ring-brand-500/20 dark:bg-brand-500/10 dark:text-brand-100">
+              <div className="mb-1 font-bold">原因の可能性: テーブル未作成</div>
+              <div>
+                Supabase にテーブルが作成されていません。
+                <span className="mx-1 rounded bg-brand-500/20 px-1.5 py-0.5 font-mono">supabase/migrations/</span>
+                内の SQL を順番に実行してください。
+              </div>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="self-start rounded-lg bg-gradient-to-r from-violet-500 to-fuchsia-500 px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:opacity-90"
+            className="btn-primary self-start"
           >
             再読み込み
           </button>

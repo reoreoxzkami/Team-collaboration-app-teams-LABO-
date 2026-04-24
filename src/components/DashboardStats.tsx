@@ -61,10 +61,10 @@ const sameDay = (a: Date, b: Date) =>
   a.getDate() === b.getDate();
 
 const tooltipStyle: React.CSSProperties = {
-  background: "rgb(var(--surface-raised))",
+  background: "rgb(var(--c-surface-raised))",
   border: "1px solid rgb(var(--c-line))",
   borderRadius: 12,
-  color: "rgb(var(--ink-primary))",
+  color: "rgb(var(--c-ink-primary))",
   fontSize: 12,
   boxShadow: "0 8px 24px rgba(0,0,0,.12)",
 };
@@ -153,8 +153,8 @@ export const DashboardStats = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--c-line))" />
-              <XAxis dataKey="day" stroke="rgb(var(--ink-tertiary))" fontSize={11} tickLine={false} />
-              <YAxis stroke="rgb(var(--ink-tertiary))" fontSize={11} tickLine={false} allowDecimals={false} width={28} />
+              <XAxis dataKey="day" stroke="rgb(var(--c-ink-tertiary))" fontSize={11} tickLine={false} />
+              <YAxis stroke="rgb(var(--c-ink-tertiary))" fontSize={11} tickLine={false} allowDecimals={false} width={28} />
               <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: "rgb(var(--c-line))" }} />
               <Area type="monotone" dataKey="count" stroke="#ec4899" strokeWidth={2.5} fill="url(#kudosGrad)" />
             </AreaChart>
@@ -186,8 +186,8 @@ export const DashboardStats = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--c-line))" />
-              <XAxis dataKey="day" stroke="rgb(var(--ink-tertiary))" fontSize={11} tickLine={false} />
-              <YAxis stroke="rgb(var(--ink-tertiary))" fontSize={11} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+              <XAxis dataKey="day" stroke="rgb(var(--c-ink-tertiary))" fontSize={11} tickLine={false} />
+              <YAxis stroke="rgb(var(--c-ink-tertiary))" fontSize={11} tickLine={false} width={32} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
               <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgb(var(--c-line) / 0.25)" }} formatter={(v) => [`${v}%`, "完了率"] as [string, string]} />
               <Bar dataKey="rate" fill="url(#rateGrad)" radius={[8, 8, 0, 0]} />
             </BarChart>
@@ -213,8 +213,8 @@ export const DashboardStats = () => {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={moodSeries} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--c-line))" />
-              <XAxis dataKey="day" stroke="rgb(var(--ink-tertiary))" fontSize={11} tickLine={false} />
-              <YAxis stroke="rgb(var(--ink-tertiary))" fontSize={11} tickLine={false} domain={[0, 5]} width={20} />
+              <XAxis dataKey="day" stroke="rgb(var(--c-ink-tertiary))" fontSize={11} tickLine={false} />
+              <YAxis stroke="rgb(var(--c-ink-tertiary))" fontSize={11} tickLine={false} domain={[0, 5]} width={20} />
               <Tooltip contentStyle={tooltipStyle} formatter={(v) => [Number(v).toFixed(2), "平均気分 (1–5)"] as [string, string]} />
               <Line type="monotone" dataKey="mood" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3, fill: "#10b981" }} activeDot={{ r: 5 }} />
             </LineChart>
@@ -252,7 +252,7 @@ export const DashboardStats = () => {
               <Legend
                 verticalAlign="bottom"
                 iconType="circle"
-                wrapperStyle={{ fontSize: 11, color: "rgb(var(--ink-secondary))" }}
+                wrapperStyle={{ fontSize: 11, color: "rgb(var(--c-ink-secondary))" }}
               />
             </PieChart>
           </ResponsiveContainer>

@@ -303,6 +303,9 @@ export const seedNotes = (): Note[] => [
   },
 ];
 
-export const SEED_VERSION = 1;
+// Bumped to 2 after adding required `tags`/`sortOrder`/`dueDate` fields to Task
+// (PR #9). Without a bump, zustand persist restores old tasks lacking these
+// fields and UI crashes on `task.tags.map`.
+export const SEED_VERSION = 2;
 export const INITIAL_CURRENT_USER_ID = "m-aki";
 export { now };

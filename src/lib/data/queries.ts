@@ -38,11 +38,16 @@ export const fetchTeamSnapshot = async (
   // First fetch team_members + polls + other team-scoped tables in parallel.
   const [membersRes, tasksRes, kudosRes, pollsRes, notesRes] = await Promise.all([
     sb.from("team_members").select("*").eq("team_id", teamId),
+    // NOTE: we intentionally do NOT order by `sort_order` here. When migration
+    // 0004 has not yet been applied that column doesn't exist and the entire
+    // snapshot fetch would fail, breaking the app for every user. We sort by
+    // `created_at` server-side and re-sort by `sortOrder` client-side after
+    // adaptation (taskFromRow defaults sortOrder to 0 when the column is
+    // missing, so ordering gracefully degrades to created_at).
     sb
       .from("tasks")
       .select("*")
       .eq("team_id", teamId)
-      .order("sort_order", { ascending: false })
       .order("created_at", { ascending: false }),
     sb
       .from("kudos")
@@ -92,7 +97,12 @@ export const fetchTeamSnapshot = async (
     memberFromJoin(tm, profileById.get(tm.user_id) ?? null),
   );
 
-  const tasks = ((tasksRes.data ?? []) as TaskRow[]).map(taskFromRow);
+  const tasks = ((tasksRes.data ?? []) as TaskRow[])
+    .map(taskFromRow)
+    .sort((a, b) => {
+      if (b.sortOrder !== a.sortOrder) return b.sortOrder - a.sortOrder;
+      return b.createdAt.localeCompare(a.createdAt);
+    });
   const kudos = ((kudosRes.data ?? []) as KudosRow[]).map(kudosFromRow);
   const votes = (votesRes.data ?? []) as PollVoteRow[];
   const polls = pollRows.map((p) => pollFromRow(p, votes));
