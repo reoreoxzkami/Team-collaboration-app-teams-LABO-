@@ -244,6 +244,27 @@ create trigger tasks_after_update
   after update on public.tasks
   for each row execute function public.tg_tasks_after_update();
 
+create or replace function public.tg_tasks_after_delete()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.enqueue_activity(
+    old.team_id, coalesce(auth.uid(), old.created_by),
+    'task.deleted', 'task', old.id,
+    jsonb_build_object('title', old.title)
+  );
+  return old;
+end;
+$$;
+
+drop trigger if exists tasks_after_delete on public.tasks;
+create trigger tasks_after_delete
+  after delete on public.tasks
+  for each row execute function public.tg_tasks_after_delete();
+
 -- ============================================================
 -- Kudos trigger
 -- ============================================================
@@ -531,3 +552,20 @@ as $$
 $$;
 
 grant execute on function public.mark_all_notifications_read(uuid) to authenticated;
+
+-- ============================================================
+-- Realtime publication: expose new tables to Supabase Realtime.
+-- Matches behaviour of 0001/0002 tables which are added to the
+-- publication out-of-band in the Supabase dashboard.
+-- ============================================================
+do $$ begin
+  alter publication supabase_realtime add table public.task_comments;
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.activity_events;
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.notifications;
+exception when duplicate_object then null; end $$;
