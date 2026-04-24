@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -30,31 +30,68 @@ export const applyTheme = (mode: ThemeMode) => {
   }
 };
 
+// ---- Module-level shared store ---------------------------------------------
+// useTheme is invoked from multiple components (App, ThemeToggle in Header,
+// ThemeToggle on LoginPage). Each call must observe the same mode, otherwise
+// stale system-preference listeners can flip the theme after the user has
+// explicitly chosen light/dark.
+
+type Listener = (mode: ThemeMode) => void;
+
+let currentMode: ThemeMode = readStoredTheme();
+const listeners = new Set<Listener>();
+let mediaListenerBound = false;
+
+const bindSystemListener = () => {
+  if (mediaListenerBound || typeof window === "undefined") return;
+  const mql = window.matchMedia?.("(prefers-color-scheme: dark)");
+  if (!mql) return;
+  mediaListenerBound = true;
+  mql.addEventListener("change", () => {
+    if (currentMode === "system") applyTheme("system");
+  });
+};
+
+const setModeShared = (mode: ThemeMode) => {
+  currentMode = mode;
+  applyTheme(mode);
+  try {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, mode);
+    }
+  } catch {
+    // private-mode or disabled storage → best-effort only
+  }
+  listeners.forEach((l) => l(mode));
+};
+
+// Initial paint sync (flash-of-wrong-theme prevention in index.html
+// already handles the .dark class, but we still need theme-color meta etc.)
+if (typeof document !== "undefined") {
+  applyTheme(currentMode);
+  bindSystemListener();
+}
+
 export const useTheme = () => {
-  const [mode, setModeState] = useState<ThemeMode>(() => readStoredTheme());
+  const [mode, setLocal] = useState<ThemeMode>(currentMode);
 
   useEffect(() => {
-    applyTheme(mode);
-    window.localStorage.setItem(STORAGE_KEY, mode);
-  }, [mode]);
+    bindSystemListener();
+    const l: Listener = (m) => setLocal(m);
+    listeners.add(l);
+    // Resync in case store changed between render and effect.
+    if (currentMode !== mode) setLocal(currentMode);
+    return () => {
+      listeners.delete(l);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  useEffect(() => {
-    if (mode !== "system") return;
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => applyTheme("system");
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [mode]);
-
-  const setMode = useCallback((m: ThemeMode) => setModeState(m), []);
-  const toggle = useCallback(
-    () =>
-      setModeState((prev) => {
-        const now = resolveTheme(prev);
-        return now === "dark" ? "light" : "dark";
-      }),
-    [],
-  );
+  const setMode = useCallback((m: ThemeMode) => setModeShared(m), []);
+  const toggle = useCallback(() => {
+    const now = resolveTheme(currentMode);
+    setModeShared(now === "dark" ? "light" : "dark");
+  }, []);
 
   return { mode, resolved: resolveTheme(mode), setMode, toggle };
 };

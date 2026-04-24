@@ -30,6 +30,7 @@ import {
   insertNote,
   insertPoll,
   insertTask,
+  reorderTask as cloudReorderTask,
   toggleKudosReaction as cloudToggleKudosReaction,
   togglePollClosed,
   updateNote as cloudUpdateNote,
@@ -90,9 +91,12 @@ interface AppState {
     description?: string;
     assigneeId?: string | null;
     priority?: TaskPriority;
+    dueDate?: string | null;
+    tags?: string[];
   }) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
+  reorderTask: (id: string, status: TaskStatus, sortOrder: number) => void;
   removeTask: (id: string) => void;
 
   // kudos
@@ -268,9 +272,17 @@ export const useStore = create<AppState>()(
         }
       },
 
-      addTask: ({ title, description, assigneeId, priority }) => {
+      addTask: ({ title, description, assigneeId, priority, dueDate, tags }) => {
         const s = get();
         const id = uid();
+        // New tasks go to the top of the "todo" column; use a high sortOrder.
+        const topSort =
+          Math.max(
+            0,
+            ...s.tasks
+              .filter((t) => t.status === "todo")
+              .map((t) => t.sortOrder ?? 0),
+          ) + 1024;
         // Optimistic: add locally in both modes.
         set((s) => ({
           ...(s.cloud ? {} : stripDemoContent(s)),
@@ -282,7 +294,9 @@ export const useStore = create<AppState>()(
               status: "todo",
               assigneeId: assigneeId ?? null,
               priority: priority ?? "medium",
-              dueDate: null,
+              dueDate: dueDate ?? null,
+              tags: tags ?? [],
+              sortOrder: topSort,
               createdAt: new Date().toISOString(),
             },
             ...(s.cloud ? s.tasks : s.tasks.filter((t) => !t.isDemo)),
@@ -296,6 +310,9 @@ export const useStore = create<AppState>()(
             description,
             priority,
             assignee_id: assigneeId ?? null,
+            due_date: dueDate ?? null,
+            tags: tags ?? [],
+            sort_order: topSort,
           }).catch(logCloudError("insertTask"));
         }
       },
@@ -321,7 +338,22 @@ export const useStore = create<AppState>()(
           if (patch.priority !== undefined) dbPatch.priority = patch.priority;
           if (patch.assigneeId !== undefined) dbPatch.assignee_id = patch.assigneeId;
           if (patch.dueDate !== undefined) dbPatch.due_date = patch.dueDate;
+          if (patch.tags !== undefined) dbPatch.tags = patch.tags;
+          if (patch.sortOrder !== undefined) dbPatch.sort_order = patch.sortOrder;
           cloudUpdateTask(id, dbPatch).catch(logCloudError("updateTask"));
+        }
+      },
+
+      reorderTask: (id, status, sortOrder) => {
+        set((s) => ({
+          tasks: s.tasks.map((t) =>
+            t.id === id ? { ...t, status, sortOrder } : t,
+          ),
+        }));
+        if (get().cloud) {
+          cloudReorderTask(id, status, sortOrder).catch(
+            logCloudError("reorderTask"),
+          );
         }
       },
 

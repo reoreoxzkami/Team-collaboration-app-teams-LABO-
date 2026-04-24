@@ -58,6 +58,9 @@ export const insertTask = async (input: {
   description?: string;
   priority?: TaskPriority;
   assignee_id?: string | null;
+  due_date?: string | null;
+  tags?: string[];
+  sort_order?: number;
 }) => {
   const sb = must();
   const { data: auth } = await sb.auth.getUser();
@@ -70,6 +73,9 @@ export const insertTask = async (input: {
     status: "todo" as TaskStatus,
     priority: input.priority ?? "medium",
     assignee_id: input.assignee_id ?? null,
+    due_date: input.due_date ?? null,
+    tags: input.tags ?? [],
+    sort_order: input.sort_order ?? Date.now(),
     created_by: auth.user.id,
   });
   if (error) throw error;
@@ -84,6 +90,8 @@ export const updateTask = async (
     priority: TaskPriority;
     assignee_id: string | null;
     due_date: string | null;
+    tags: string[];
+    sort_order: number;
   }>,
 ) => {
   const sb = must();
@@ -94,6 +102,24 @@ export const updateTask = async (
 export const deleteTask = async (taskId: string) => {
   const sb = must();
   const { error } = await sb.from("tasks").delete().eq("id", taskId);
+  if (error) throw error;
+};
+
+/**
+ * Atomically sets (status, sort_order) on a task via an RPC. Avoids a
+ * read/modify/write race when multiple users reorder the same column.
+ */
+export const reorderTask = async (
+  taskId: string,
+  status: TaskStatus,
+  sortOrder: number,
+): Promise<void> => {
+  const sb = must();
+  const { error } = await sb.rpc("reorder_task", {
+    p_task_id: taskId,
+    p_status: status,
+    p_sort_order: sortOrder,
+  });
   if (error) throw error;
 };
 

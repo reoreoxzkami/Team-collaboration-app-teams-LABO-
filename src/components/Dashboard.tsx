@@ -12,6 +12,7 @@ import { Avatar } from "./Avatar";
 import { StatusDot } from "./StatusDot";
 import { timeAgo } from "../lib/time";
 import type { View } from "../types";
+import { DashboardStats } from "./DashboardStats";
 
 const StatCard = ({
   label,
@@ -99,6 +100,8 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
         />
       </div>
 
+      <DashboardStats />
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <section className="glass-card col-span-1 p-5 xl:col-span-2">
           <div className="mb-4 flex items-center justify-between">
@@ -106,7 +109,7 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-pink-500 text-white">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h2 className="font-display text-lg font-extrabold">
+              <h2 className="font-display text-lg font-extrabold text-ink-primary">
                 メンバーの今
               </h2>
             </div>
@@ -122,16 +125,16 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
             {members.map((m) => (
               <li
                 key={m.id}
-                className="group flex items-center gap-3 rounded-2xl border border-white/70 bg-white/70 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-card"
+                className="group flex items-center gap-3 rounded-2xl border border-line/60 bg-surface-raised/70 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-card"
               >
                 <Avatar member={m} size="lg" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate font-bold">{m.name}</span>
+                    <span className="truncate font-bold text-ink-primary">{m.name}</span>
                     <StatusDot status={m.status} />
                   </div>
-                  <div className="truncate text-xs text-slate-500">{m.role}</div>
-                  <div className="mt-1 line-clamp-1 text-xs text-slate-600">
+                  <div className="truncate text-xs text-ink-tertiary">{m.role}</div>
+                  <div className="mt-1 line-clamp-1 text-xs text-ink-secondary">
                     <span className="mr-1">{m.mood}</span>
                     {m.moodNote}
                   </div>
@@ -146,11 +149,11 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 text-white">
               <Heart className="h-5 w-5" />
             </div>
-            <h2 className="font-display text-lg font-extrabold">最新のKudos</h2>
+            <h2 className="font-display text-lg font-extrabold text-ink-primary">最新のKudos</h2>
           </div>
           <ul className="space-y-3">
             {latestKudos.length === 0 && (
-              <li className="text-sm text-slate-500">
+              <li className="text-sm text-ink-secondary">
                 まだKudosがありません。最初の一人になろう！
               </li>
             )}
@@ -188,34 +191,34 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 text-white">
               <TrendingUp className="h-5 w-5" />
             </div>
-            <h2 className="font-display text-lg font-extrabold">あなたのタスク</h2>
+            <h2 className="font-display text-lg font-extrabold text-ink-primary">あなたのタスク</h2>
           </div>
           <ul className="space-y-2">
             {myTasks.length === 0 && (
-              <li className="text-sm text-slate-500">
+              <li className="text-sm text-ink-secondary">
                 空きがあります！新しいタスクはありません。
               </li>
             )}
             {myTasks.map((t) => (
               <li
                 key={t.id}
-                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white/70 p-3"
+                className="flex items-center gap-3 rounded-2xl border border-line/60 bg-surface-raised/70 p-3"
               >
                 <span
                   className={`chip ${
                     t.priority === "high"
-                      ? "bg-rose-100 text-rose-700"
+                      ? "bg-rose-500/15 text-rose-700 dark:text-rose-200"
                       : t.priority === "medium"
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-emerald-100 text-emerald-700"
+                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-200"
+                        : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200"
                   }`}
                 >
                   {t.priority}
                 </span>
-                <div className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700">
+                <div className="min-w-0 flex-1 truncate text-sm font-semibold text-ink-primary">
                   {t.title}
                 </div>
-                <span className="text-[11px] font-semibold text-slate-400">
+                <span className="text-[11px] font-semibold text-ink-tertiary">
                   {t.status}
                 </span>
               </li>
@@ -234,11 +237,11 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
               <Vote className="h-5 w-5" />
             </div>
-            <h2 className="font-display text-lg font-extrabold">注目の投票</h2>
+            <h2 className="font-display text-lg font-extrabold text-ink-primary">注目の投票</h2>
           </div>
           {topPoll ? (
             <div>
-              <div className="font-semibold text-slate-800">
+              <div className="font-semibold text-ink-primary">
                 {topPoll.question}
               </div>
               <ul className="mt-3 space-y-2">
@@ -251,17 +254,17 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
                   return (
                     <li
                       key={o.id}
-                      className="relative overflow-hidden rounded-xl border border-slate-100 bg-white/70 px-3 py-2 text-sm"
+                      className="relative overflow-hidden rounded-xl border border-line/60 bg-surface-raised/70 px-3 py-2 text-sm"
                     >
                       <div
                         className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-200/60 to-teal-200/60"
                         style={{ width: `${pct}%` }}
                       />
                       <div className="relative flex items-center justify-between">
-                        <span className="font-semibold text-slate-700">
+                        <span className="font-semibold text-ink-primary">
                           {o.text}
                         </span>
-                        <span className="text-xs font-bold text-slate-600">
+                        <span className="text-xs font-bold text-ink-secondary">
                           {o.votes.length}票 ({Math.round(pct)}%)
                         </span>
                       </div>
@@ -277,7 +280,7 @@ export const Dashboard = ({ onNavigate }: { onNavigate: (v: View) => void }) => 
               </button>
             </div>
           ) : (
-            <p className="text-sm text-slate-500">投票はまだありません。</p>
+            <p className="text-sm text-ink-secondary">投票はまだありません。</p>
           )}
         </section>
       </div>

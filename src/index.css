@@ -104,7 +104,8 @@
     box-shadow:
       0 0 0 2px rgb(var(--c-surface-base)),
       0 0 0 4px rgb(var(--c-ink-primary) / 0.35);
-    border-radius: 8px;
+    /* Inherit each element's own radius so the ring follows it correctly. */
+    border-radius: inherit;
   }
 
   /* Reduce motion for users who ask for it. */
@@ -306,6 +307,16 @@
     );
     background-size: 400px 100%;
     @apply animate-shimmer;
+  }
+
+  /* =================
+     Keyboard chip
+     ================= */
+  .kbd {
+    @apply inline-flex min-w-[1.25rem] items-center justify-center rounded-md px-1.5 py-0.5 text-[11px] font-mono font-bold text-ink-secondary;
+    background: rgb(var(--glass-bg) / 1);
+    border: 1px solid rgb(var(--c-line) / 1);
+    box-shadow: 0 1px 0 0 rgb(var(--c-line) / 1);
   }
 
   /* =================

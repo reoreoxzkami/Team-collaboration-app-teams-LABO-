@@ -1,4 +1,4 @@
-import { LogOut, RotateCcw, Users2 } from "lucide-react";
+import { Keyboard, LogOut, RotateCcw, Search, Users2 } from "lucide-react";
 import { useStore } from "../store";
 import { Avatar } from "./Avatar";
 import { StatusDot } from "./StatusDot";
@@ -7,8 +7,14 @@ import { signOut } from "../lib/auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useActiveTeam } from "../lib/team-context";
 import { ThemeToggle } from "./brand/ThemeToggle";
+import { NotificationCenter } from "./NotificationCenter";
 
-export const Header = () => {
+interface HeaderProps {
+  onOpenPalette?: () => void;
+  onOpenCheatsheet?: () => void;
+}
+
+export const Header = ({ onOpenPalette, onOpenCheatsheet }: HeaderProps = {}) => {
   const { members, currentUserId, setCurrentUser, resetDemoData, cloud } =
     useStore();
   const me = members.find((m) => m.id === currentUserId);
@@ -42,6 +48,31 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-2">
+        {onOpenPalette && (
+          <button
+            onClick={onOpenPalette}
+            className="hidden items-center gap-2 rounded-xl border border-line/60 bg-surface-raised/70 px-3 py-1.5 text-xs text-ink-secondary transition hover:border-brand-500/40 hover:bg-surface-raised md:inline-flex"
+            title="コマンドパレットを開く"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span>検索...</span>
+            <span className="ml-2 flex gap-1">
+              <kbd className="kbd">⌘</kbd>
+              <kbd className="kbd">K</kbd>
+            </span>
+          </button>
+        )}
+        {onOpenCheatsheet && (
+          <button
+            onClick={onOpenCheatsheet}
+            className="btn-icon"
+            title="キーボードショートカット (?)"
+            aria-label="キーボードショートカット一覧"
+          >
+            <Keyboard className="h-4 w-4" />
+          </button>
+        )}
+        <NotificationCenter />
         <ThemeToggle />
 
         {!cloud && (
