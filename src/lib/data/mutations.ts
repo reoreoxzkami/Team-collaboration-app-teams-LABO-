@@ -51,6 +51,25 @@ export const updateMyTeamMember = async (
 
 // ===== tasks =====
 
+// Columns added by migration 0004. If that migration hasn't run yet Supabase
+// returns error code 42703 ("column does not exist") or PostgREST's PGRST204
+// ("schema cache"). We retry the write with these stripped so the app stays
+// functional while the user applies the migration.
+const TASK_OPTIONAL_COLS = ["due_date", "tags", "sort_order"] as const;
+
+const isMissingColumnError = (err: unknown): boolean => {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; message?: string };
+  if (e.code === "42703" || e.code === "PGRST204") return true;
+  return typeof e.message === "string" && /column .* does not exist/i.test(e.message);
+};
+
+const stripOptional = <T extends Record<string, unknown>>(row: T): Partial<T> => {
+  const out: Partial<T> = { ...row };
+  for (const k of TASK_OPTIONAL_COLS) delete (out as Record<string, unknown>)[k];
+  return out;
+};
+
 export const insertTask = async (input: {
   id?: string;
   team_id: string;
@@ -65,7 +84,7 @@ export const insertTask = async (input: {
   const sb = must();
   const { data: auth } = await sb.auth.getUser();
   if (!auth.user) throw new Error("not signed in");
-  const { error } = await sb.from("tasks").insert({
+  const row = {
     ...(input.id ? { id: input.id } : {}),
     team_id: input.team_id,
     title: input.title,
@@ -77,7 +96,11 @@ export const insertTask = async (input: {
     tags: input.tags ?? [],
     sort_order: input.sort_order ?? Date.now(),
     created_by: auth.user.id,
-  });
+  };
+  let { error } = await sb.from("tasks").insert(row);
+  if (error && isMissingColumnError(error)) {
+    ({ error } = await sb.from("tasks").insert(stripOptional(row)));
+  }
   if (error) throw error;
 };
 
@@ -95,7 +118,12 @@ export const updateTask = async (
   }>,
 ) => {
   const sb = must();
-  const { error } = await sb.from("tasks").update(patch).eq("id", taskId);
+  let { error } = await sb.from("tasks").update(patch).eq("id", taskId);
+  if (error && isMissingColumnError(error)) {
+    const safe = stripOptional(patch as Record<string, unknown>);
+    if (Object.keys(safe).length === 0) return;
+    ({ error } = await sb.from("tasks").update(safe).eq("id", taskId));
+  }
   if (error) throw error;
 };
 

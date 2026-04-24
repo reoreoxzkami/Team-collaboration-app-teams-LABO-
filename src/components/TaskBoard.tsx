@@ -74,11 +74,27 @@ const PRIORITY_LABEL: Record<TaskPriority, string> = {
   high: "高",
 };
 
-const toInputDate = (iso: string | null): string =>
-  iso ? new Date(iso).toISOString().slice(0, 10) : "";
+// Date inputs (`<input type="date">`) are timezone-agnostic YYYY-MM-DD strings;
+// we have to convert between them and ISO timestamps in the **local** timezone,
+// otherwise JST users see "April 24" stored as `2026-04-23T15:00Z` and re-read
+// back as `2026-04-23`, shifting every due date a day earlier.
+const toInputDate = (iso: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
-const fromInputDate = (v: string): string | null =>
-  v ? new Date(`${v}T00:00:00`).toISOString() : null;
+const fromInputDate = (v: string): string | null => {
+  if (!v) return null;
+  const [y, m, d] = v.split("-").map(Number);
+  // Local-midnight preserves the day the user picked when we later re-read
+  // with Date#getFullYear etc.
+  return new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0).toISOString();
+};
 
 interface DueChipProps {
   due: string;
@@ -622,7 +638,7 @@ const CardShell = ({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-1">
-        {task.tags.map((tag) => (
+        {(task.tags ?? []).map((tag) => (
           <span
             key={tag}
             className="chip bg-brand-500/10 text-brand-700 ring-1 ring-brand-500/20 dark:text-brand-200"
@@ -658,14 +674,14 @@ const CardShell = ({
             ) : (
               <button
                 onClick={() => {
-                  setTagDraft(task.tags.join(", "));
+                  setTagDraft((task.tags ?? []).join(", "));
                   setEditingTags(true);
                 }}
                 className="chip bg-surface-raised text-ink-tertiary ring-1 ring-line hover:text-ink-primary"
                 title="タグを編集"
               >
                 <Tag className="h-3 w-3" />
-                {task.tags.length === 0 ? "タグ追加" : "編集"}
+                {(task.tags ?? []).length === 0 ? "タグ追加" : "編集"}
               </button>
             )}
           </>

@@ -6,57 +6,69 @@ interface LogoProps {
 
 /**
  * teams LABO brand mark.
- * Three overlapping circles (team members blending) inside an aurora-tinted
- * rounded square — a miniature "lab" where team colors mix.
+ * Three overlapping color wells (coral / violet / cyan) sitting inside a
+ * rounded-square "lab tile". The three wells represent individual members
+ * whose colors blend where they overlap — the central white spark is the
+ * "reaction" that collaboration produces.
  */
 export const LogoMark = ({
   size = 40,
   className,
   title = "teams LABO",
-}: LogoProps) => (
-  <svg
-    viewBox="0 0 64 64"
-    width={size}
-    height={size}
-    className={className}
-    role="img"
-    aria-label={title}
-  >
-    <title>{title}</title>
-    <defs>
-      <linearGradient id="labo-tile" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stopColor="#f472b6" />
-        <stop offset="50%" stopColor="#8b5cf6" />
-        <stop offset="100%" stopColor="#38bdf8" />
-      </linearGradient>
-      <radialGradient id="labo-halo" cx="30%" cy="30%" r="70%">
-        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
-        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-      </radialGradient>
-    </defs>
+}: LogoProps) => {
+  // Stable gradient IDs per mount so multiple logos on one page don't collide.
+  const uid = `labo-${Math.random().toString(36).slice(2, 8)}`;
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width={size}
+      height={size}
+      className={className}
+      role="img"
+      aria-label={title}
+    >
+      <title>{title}</title>
+      <defs>
+        <linearGradient id={`${uid}-tile`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ff2f64" />
+          <stop offset="45%" stopColor="#7a4dff" />
+          <stop offset="100%" stopColor="#00d4ff" />
+        </linearGradient>
+        <radialGradient id={`${uid}-halo`} cx="30%" cy="28%" r="72%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.65" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${uid}-spark`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+          <stop offset="70%" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+      </defs>
 
-    <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#labo-tile)" />
-    <rect
-      x="2"
-      y="2"
-      width="60"
-      height="60"
-      rx="16"
-      fill="url(#labo-halo)"
-      opacity="0.9"
-    />
+      <rect x="2" y="2" width="60" height="60" rx="16" fill={`url(#${uid}-tile)`} />
+      <rect
+        x="2"
+        y="2"
+        width="60"
+        height="60"
+        rx="16"
+        fill={`url(#${uid}-halo)`}
+        opacity="0.92"
+      />
 
-    {/* three translucent circles suggesting collaborating people */}
-    <g style={{ mixBlendMode: "screen" }} opacity="0.95">
-      <circle cx="24" cy="26" r="12" fill="#ff87c5" opacity="0.9" />
-      <circle cx="40" cy="26" r="12" fill="#8b5cf6" opacity="0.95" />
-      <circle cx="32" cy="42" r="12" fill="#38bdf8" opacity="0.9" />
-    </g>
+      {/* three translucent wells suggesting collaborating members */}
+      <g style={{ mixBlendMode: "screen" }} opacity="0.95">
+        <circle cx="24" cy="26" r="12" fill="#ff5fa2" opacity="0.92" />
+        <circle cx="40" cy="26" r="12" fill="#9373ff" opacity="0.95" />
+        <circle cx="32" cy="42" r="12" fill="#00d4ff" opacity="0.92" />
+      </g>
 
-    {/* central spark */}
-    <circle cx="32" cy="32" r="3" fill="#ffffff" />
-  </svg>
-);
+      {/* central reaction spark */}
+      <circle cx="32" cy="32" r="4.5" fill={`url(#${uid}-spark)`} />
+      <circle cx="32" cy="32" r="2" fill="#ffffff" />
+    </svg>
+  );
+};
 
 interface WordmarkProps extends LogoProps {
   align?: "inline" | "stack";
