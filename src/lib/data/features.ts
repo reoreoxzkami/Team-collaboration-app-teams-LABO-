@@ -37,15 +37,18 @@ export const fetchActivity = async (
 
 export const fetchNotifications = async (
   userId: string,
+  teamId: string | null,
   limit = 50,
 ): Promise<AppNotification[]> => {
   const sb = must();
-  const { data, error } = await sb
+  let q = sb
     .from("notifications")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (teamId) q = q.eq("team_id", teamId);
+  const { data, error } = await q;
   if (error) throw error;
   return ((data ?? []) as NotificationRow[]).map(notificationFromRow);
 };
@@ -57,9 +60,13 @@ export const markNotificationsRead = async (ids: string[]): Promise<void> => {
   if (error) throw error;
 };
 
-export const markAllNotificationsRead = async (): Promise<void> => {
+export const markAllNotificationsRead = async (
+  teamId: string | null,
+): Promise<void> => {
   const sb = must();
-  const { error } = await sb.rpc("mark_all_notifications_read");
+  const { error } = await sb.rpc("mark_all_notifications_read", {
+    p_team_id: teamId,
+  });
   if (error) throw error;
 };
 

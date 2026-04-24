@@ -38,7 +38,7 @@ create table if not exists public.task_comments (
   id          uuid primary key default gen_random_uuid(),
   team_id     uuid not null references public.teams(id) on delete cascade,
   task_id     uuid not null references public.tasks(id) on delete cascade,
-  author_id   uuid not null references auth.users(id) on delete set null,
+  author_id   uuid not null references auth.users(id) on delete cascade,
   body        text not null,
   -- user_ids parsed from @mentions at write time (see insert_task_comment RPC).
   mentions    uuid[] not null default '{}'::uuid[],
@@ -455,7 +455,8 @@ begin
     jsonb_build_object(
       'comment_id', v_row.id,
       'title', v_task.title,
-      'preview', left(v_row.body, 140)
+      'preview', left(v_row.body, 140),
+      'mentions_count', coalesce(array_length(v_clean, 1), 0)
     )
   );
 
@@ -510,7 +511,13 @@ $$;
 
 grant execute on function public.mark_notifications_read(uuid[]) to authenticated;
 
-create or replace function public.mark_all_notifications_read()
+-- Drop an older 0-arg version that may have been created by prior runs of this
+-- migration; the new signature takes an optional team scope.
+drop function if exists public.mark_all_notifications_read();
+
+create or replace function public.mark_all_notifications_read(
+  p_team_id uuid default null
+)
 returns void
 language sql
 security definer
@@ -519,7 +526,8 @@ as $$
   update public.notifications
      set read_at = now()
    where user_id = auth.uid()
-     and read_at is null;
+     and read_at is null
+     and (p_team_id is null or team_id = p_team_id);
 $$;
 
-grant execute on function public.mark_all_notifications_read() to authenticated;
+grant execute on function public.mark_all_notifications_read(uuid) to authenticated;

@@ -42,11 +42,10 @@ export const useNotifications = (
     setLoading(true);
     setError(null);
 
-    fetchNotifications(userId)
+    fetchNotifications(userId, teamId)
       .then((rows) => {
         if (!cancelled) {
-          const scoped = teamId ? rows : rows;
-          setItems(scoped);
+          setItems(rows);
           setLoading(false);
         }
       })
@@ -59,8 +58,10 @@ export const useNotifications = (
         }
       });
 
+    // Realtime filter only supports a single field; filter by user_id in the
+    // channel and discard cross-team rows client-side.
     const channel = supabase
-      .channel(`notifications-${userId}`)
+      .channel(`notifications-${userId}-${teamId ?? "any"}`)
       .on(
         "postgres_changes",
         {
@@ -71,6 +72,7 @@ export const useNotifications = (
         },
         (payload) => {
           const row = payload.new as NotificationRow;
+          if (teamId && row.team_id !== teamId) return;
           setItems((prev) => {
             if (prev.some((n) => n.id === row.id)) return prev;
             return [notificationFromRow(row), ...prev];
@@ -87,6 +89,7 @@ export const useNotifications = (
         },
         (payload) => {
           const row = payload.new as NotificationRow;
+          if (teamId && row.team_id !== teamId) return;
           setItems((prev) =>
             prev.map((n) => (n.id === row.id ? notificationFromRow(row) : n)),
           );
@@ -137,11 +140,11 @@ export const useNotifications = (
     const now = new Date().toISOString();
     setItems((prev) => prev.map((n) => (n.readAt ? n : { ...n, readAt: now })));
     try {
-      await markAllNotificationsRead();
+      await markAllNotificationsRead(teamId);
     } catch (err) {
       console.error("teams-labo markAllNotificationsRead error", err);
     }
-  }, []);
+  }, [teamId]);
 
   return { items, unreadCount, loading, error, markRead, markAllRead };
 };
