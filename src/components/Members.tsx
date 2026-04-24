@@ -13,8 +13,8 @@ export const Members = () => {
   return (
     <div className="space-y-6">
       <div className="glass-card p-5">
-        <h2 className="font-display text-xl font-extrabold">チームメンバー</h2>
-        <p className="text-sm text-slate-500">
+        <h2 className="font-display text-xl font-extrabold text-ink-primary">チームメンバー</h2>
+        <p className="text-sm text-ink-secondary">
           アバターをクリックして「自分」を切り替えられます。ステータスは各自で自由に更新できます。
         </p>
       </div>
@@ -42,35 +42,35 @@ export const Members = () => {
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-display text-lg font-extrabold">
+                    <span className="font-display text-lg font-extrabold text-ink-primary">
                       {m.name}
                     </span>
                     {isMe && (
-                      <span className="chip bg-brand-100 text-brand-700">
+                      <span className="chip bg-brand-500/20 text-brand-700 dark:text-brand-200">
                         YOU
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-500">{m.role}</div>
+                  <div className="text-xs text-ink-secondary">{m.role}</div>
                   <div className="mt-1 flex items-center gap-2">
                     <StatusDot status={m.status} showLabel />
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl bg-white/70 p-3 text-sm">
+              <div className="mt-4 rounded-2xl bg-surface-raised/70 p-3 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{m.mood}</span>
-                  <span className="text-slate-700">{m.moodNote}</span>
+                  <span className="text-ink-primary">{m.moodNote}</span>
                 </div>
-                <div className="mt-1 text-[11px] text-slate-400">
+                <div className="mt-1 text-[11px] text-ink-tertiary">
                   気分の更新 {timeAgo(m.moodUpdatedAt)}
                 </div>
               </div>
 
               {isMe && (
                 <div className="mt-4">
-                  <div className="mb-1.5 text-xs font-bold text-slate-500">
+                  <div className="mb-1.5 text-xs font-bold text-ink-secondary">
                     ステータスを変更
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -81,7 +81,7 @@ export const Members = () => {
                         className={`chip transition ${
                           m.status === s
                             ? "bg-brand-600 text-white"
-                            : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-brand-50"
+                            : "bg-surface-raised text-ink-secondary ring-1 ring-line hover:bg-brand-500/10"
                         }`}
                       >
                         {statusLabel(s)}

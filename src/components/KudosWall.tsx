@@ -36,10 +36,10 @@ export const KudosWall = () => {
           className="absolute inset-x-0 top-0 h-28 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-indigo-400 opacity-70 blur-2xl"
         />
         <div className="relative">
-          <h2 className="font-display text-xl font-extrabold">
+          <h2 className="font-display text-xl font-extrabold text-ink-primary">
             感謝を贈ろう 💌
           </h2>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-ink-secondary">
             小さな「ありがとう」がチームを育てます。
           </p>
 
@@ -77,7 +77,7 @@ export const KudosWall = () => {
                 className={`chip text-lg transition ${
                   emoji === e
                     ? "bg-brand-600 text-white"
-                    : "bg-white ring-1 ring-slate-200 hover:bg-brand-50"
+                    : "bg-surface-raised ring-1 ring-line hover:bg-brand-500/10"
                 }`}
                 title={e}
               >
@@ -125,7 +125,7 @@ export const KudosWall = () => {
                       onClick={() => toggleKudosReaction(k.id, e)}
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs transition ${
                         mine
-                          ? "bg-white text-slate-800"
+                          ? "bg-white text-slate-900"
                           : "bg-white/20 text-white hover:bg-white/30"
                       }`}
                     >

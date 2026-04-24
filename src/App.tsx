@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Header } from "./components/Header";
 import { MobileTabBar, Sidebar } from "./components/Sidebar";
 import { Dashboard } from "./components/Dashboard";
+import { ActivityFeed } from "./components/ActivityFeed";
 import { Members } from "./components/Members";
 import { TaskBoard } from "./components/TaskBoard";
 import { KudosWall } from "./components/KudosWall";
@@ -17,6 +18,7 @@ import type { View } from "./types";
 
 const VIEW_META: Record<View, { title: string; sub: string }> = {
   dashboard: { title: "Dashboard", sub: "チームの“今”をひと目で。" },
+  activity: { title: "Activity", sub: "チーム全体の最近の動きを時系列で。" },
   members: { title: "Members", sub: "仲間のステータスと気分。" },
   tasks: { title: "Task Board", sub: "みんなでタスクを前に進める。" },
   kudos: { title: "Kudos Wall", sub: "感謝を贈り合う場所。" },
@@ -81,6 +83,7 @@ const App = () => {
               transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
             >
               {view === "dashboard" && <Dashboard onNavigate={setView} />}
+              {view === "activity" && <ActivityFeed />}
               {view === "members" && <Members />}
               {view === "tasks" && <TaskBoard />}
               {view === "kudos" && <KudosWall />}

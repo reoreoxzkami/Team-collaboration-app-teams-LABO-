@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, Trash2 } from "lucide-react";
 import { useStore } from "../store";
 import type { Task, TaskPriority, TaskStatus } from "../types";
 import { Avatar } from "./Avatar";
+import { TaskCommentsOverlay } from "./TaskCommentsPanel";
 
 const COLUMNS: { id: TaskStatus; label: string; accent: string; emoji: string }[] =
   [
@@ -33,13 +34,13 @@ const COLUMNS: { id: TaskStatus; label: string; accent: string; emoji: string }[
   ];
 
 const PRIORITY_STYLE: Record<TaskPriority, string> = {
-  low: "bg-emerald-100 text-emerald-700",
-  medium: "bg-amber-100 text-amber-700",
-  high: "bg-rose-100 text-rose-700",
+  low: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-200",
+  medium: "bg-amber-500/15 text-amber-700 dark:text-amber-200",
+  high: "bg-rose-500/15 text-rose-700 dark:text-rose-200",
 };
 
 export const TaskBoard = () => {
-  const { tasks, members, addTask, updateTaskStatus, updateTask, removeTask } =
+  const { tasks, members, addTask, updateTaskStatus, updateTask, removeTask, cloud } =
     useStore();
 
   const [draft, setDraft] = useState({
@@ -49,6 +50,7 @@ export const TaskBoard = () => {
     priority: "medium" as TaskPriority,
   });
   const [dragId, setDragId] = useState<string | null>(null);
+  const [commentsTask, setCommentsTask] = useState<Task | null>(null);
 
   const submit = () => {
     if (!draft.title.trim()) return;
@@ -71,8 +73,10 @@ export const TaskBoard = () => {
   return (
     <div className="space-y-6">
       <div className="glass-card p-5">
-        <h2 className="font-display text-xl font-extrabold">タスクボード</h2>
-        <p className="text-sm text-slate-500">
+        <h2 className="font-display text-xl font-extrabold text-ink-primary">
+          タスクボード
+        </h2>
+        <p className="text-sm text-ink-secondary">
           カードをドラッグ＆ドロップしてステータスを変更できます。
         </p>
 
@@ -154,6 +158,7 @@ export const TaskBoard = () => {
                   <TaskCard
                     key={t.id}
                     task={t}
+                    canComment={!!cloud}
                     onDragStart={() => setDragId(t.id)}
                     onDragEnd={() => setDragId(null)}
                     onPriority={(p) => updateTask(t.id, { priority: p })}
@@ -161,10 +166,11 @@ export const TaskBoard = () => {
                       updateTask(t.id, { assigneeId: a || null })
                     }
                     onDelete={() => removeTask(t.id)}
+                    onOpenComments={() => setCommentsTask(t)}
                   />
                 ))}
                 {items.length === 0 && (
-                  <li className="rounded-2xl border border-dashed border-slate-300/70 bg-white/40 p-4 text-center text-xs text-slate-400">
+                  <li className="rounded-2xl border border-dashed border-line bg-surface-raised/40 p-4 text-center text-xs text-ink-tertiary">
                     ここにドロップ
                   </li>
                 )}
@@ -173,24 +179,33 @@ export const TaskBoard = () => {
           );
         })}
       </div>
+
+      <TaskCommentsOverlay
+        task={commentsTask}
+        onClose={() => setCommentsTask(null)}
+      />
     </div>
   );
 };
 
 const TaskCard = ({
   task,
+  canComment,
   onDragStart,
   onDragEnd,
   onPriority,
   onAssignee,
   onDelete,
+  onOpenComments,
 }: {
   task: Task;
+  canComment: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
   onPriority: (p: TaskPriority) => void;
   onAssignee: (id: string) => void;
   onDelete: () => void;
+  onOpenComments: () => void;
 }) => {
   const { members } = useStore();
   const assignee = members.find((m) => m.id === task.assigneeId);
@@ -199,24 +214,36 @@ const TaskCard = ({
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      className="group cursor-grab rounded-2xl border border-white/70 bg-white/90 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-card active:cursor-grabbing"
+      className="group cursor-grab rounded-2xl border border-white/70 bg-surface-raised/90 p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-card active:cursor-grabbing dark:border-line/60"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-bold text-slate-800">{task.title}</div>
+          <div className="text-sm font-bold text-ink-primary">{task.title}</div>
           {task.description && (
-            <div className="mt-1 text-xs text-slate-500">
+            <div className="mt-1 text-xs text-ink-secondary">
               {task.description}
             </div>
           )}
         </div>
-        <button
-          onClick={onDelete}
-          className="rounded-lg p-1 text-slate-300 opacity-0 transition hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100"
-          title="削除"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+          {canComment && (
+            <button
+              onClick={onOpenComments}
+              className="rounded-lg p-1 text-ink-tertiary transition hover:bg-brand-500/10 hover:text-brand-600"
+              title="コメント"
+              aria-label="コメント"
+            >
+              <MessageSquare className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            onClick={onDelete}
+            className="rounded-lg p-1 text-ink-tertiary transition hover:bg-rose-500/10 hover:text-rose-500"
+            title="削除"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <select
@@ -231,7 +258,7 @@ const TaskCard = ({
         <div className="flex items-center gap-2">
           {assignee && <Avatar member={assignee} size="sm" />}
           <select
-            className="rounded-lg bg-white px-1.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200"
+            className="rounded-lg bg-surface-raised px-1.5 py-1 text-[11px] font-semibold text-ink-secondary ring-1 ring-line"
             value={task.assigneeId ?? ""}
             onChange={(e) => onAssignee(e.target.value)}
           >

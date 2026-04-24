@@ -26,10 +26,10 @@ export const Polls = () => {
           className="absolute inset-x-0 top-0 h-28 bg-gradient-to-r from-emerald-300 via-teal-400 to-sky-400 opacity-70 blur-2xl"
         />
         <div className="relative">
-          <h2 className="font-display text-xl font-extrabold">
+          <h2 className="font-display text-xl font-extrabold text-ink-primary">
             クイック投票を作成
           </h2>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-ink-secondary">
             ちょっとした意思決定はサクッと投票で。
           </p>
 
@@ -88,10 +88,10 @@ export const Polls = () => {
             <article key={p.id} className="glass-card p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-display text-lg font-extrabold">
+                  <h3 className="font-display text-lg font-extrabold text-ink-primary">
                     {p.question}
                   </h3>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-ink-tertiary">
                     {createdBy?.name} さん ・ {timeAgo(p.createdAt)} ・ 総投票{" "}
                     {total}
                   </div>
@@ -129,21 +129,21 @@ export const Polls = () => {
                       <button
                         disabled={p.closed}
                         onClick={() => voteOnPoll(p.id, o.id)}
-                        className={`relative flex w-full items-center justify-between overflow-hidden rounded-2xl border bg-white/80 px-4 py-2.5 text-left text-sm transition ${
+                        className={`relative flex w-full items-center justify-between overflow-hidden rounded-2xl border bg-surface-raised/80 px-4 py-2.5 text-left text-sm transition ${
                           mine
                             ? "border-transparent ring-2 ring-brand-400"
-                            : "border-slate-100 hover:border-brand-200"
+                            : "border-line/60 hover:border-brand-400/60"
                         } ${p.closed ? "opacity-70" : ""}`}
                       >
                         <div
                           className={`absolute inset-y-0 left-0 bg-gradient-to-r opacity-30 ${accent}`}
                           style={{ width: `${pct}%` }}
                         />
-                        <span className="relative z-10 font-semibold text-slate-700">
+                        <span className="relative z-10 font-semibold text-ink-primary">
                           {mine && "✓ "}
                           {o.text}
                         </span>
-                        <span className="relative z-10 text-xs font-bold text-slate-600">
+                        <span className="relative z-10 text-xs font-bold text-ink-secondary">
                           {o.votes.length}票 ({Math.round(pct)}%)
                         </span>
                       </button>
@@ -154,7 +154,7 @@ export const Polls = () => {
                             return (
                               <span
                                 key={uid}
-                                className="chip bg-white text-[10px] text-slate-600 ring-1 ring-slate-200"
+                                className="chip bg-surface-raised text-[10px] text-ink-secondary ring-1 ring-line"
                                 title={v?.name}
                               >
                                 {v?.emoji} {v?.name}
@@ -171,7 +171,7 @@ export const Polls = () => {
           );
         })}
         {polls.length === 0 && (
-          <div className="glass-card p-6 text-center text-sm text-slate-500 lg:col-span-2">
+          <div className="glass-card p-6 text-center text-sm text-ink-secondary lg:col-span-2">
             まだ投票がありません。
           </div>
         )}

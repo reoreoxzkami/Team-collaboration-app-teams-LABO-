@@ -50,8 +50,8 @@ export const AuthGate = ({ children }: Props) => {
 
   if (!ready) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">
-        <div className="glass-panel px-5 py-3 text-sm text-slate-600">
+      <div className="flex min-h-[100dvh] items-center justify-center">
+        <div className="glass-panel px-5 py-3 text-sm text-ink-secondary">
           読み込み中…
         </div>
       </div>
@@ -87,12 +87,12 @@ const HydrationGate = ({ children }: { children: ReactNode }) => {
   const cloudError = useStore((s) => s.cloudError);
   if (cloudError) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">
-        <div className="glass-panel flex max-w-md flex-col gap-3 p-6 text-sm text-slate-700">
-          <div className="text-base font-semibold text-rose-600">
+      <div className="flex min-h-[100dvh] items-center justify-center">
+        <div className="glass-panel flex max-w-md flex-col gap-3 p-6 text-sm text-ink-secondary">
+          <div className="text-base font-semibold text-rose-500">
             チームデータを取得できませんでした
           </div>
-          <div className="text-xs text-slate-500 break-words">{cloudError}</div>
+          <div className="text-xs text-ink-tertiary break-words">{cloudError}</div>
           <button
             type="button"
             onClick={() => window.location.reload()}
@@ -106,8 +106,8 @@ const HydrationGate = ({ children }: { children: ReactNode }) => {
   }
   if (!cloudHydrated) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100">
-        <div className="glass-panel px-5 py-3 text-sm text-slate-600">
+      <div className="flex min-h-[100dvh] items-center justify-center">
+        <div className="glass-panel px-5 py-3 text-sm text-ink-secondary">
           チームデータを読み込み中…
         </div>
       </div>

@@ -32,8 +32,8 @@ export const Notes = () => {
   return (
     <div className="space-y-6">
       <section className="glass-card p-5">
-        <h2 className="font-display text-xl font-extrabold">共有メモ</h2>
-        <p className="text-sm text-slate-500">
+        <h2 className="font-display text-xl font-extrabold text-ink-primary">共有メモ</h2>
+        <p className="text-sm text-ink-secondary">
           軽くシェアしたい情報はここに。ダブルクリックで編集できます。
         </p>
 

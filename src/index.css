@@ -104,7 +104,8 @@
     box-shadow:
       0 0 0 2px rgb(var(--c-surface-base)),
       0 0 0 4px rgb(var(--c-ink-primary) / 0.35);
-    border-radius: 8px;
+    /* Inherit each element's own radius so the ring follows it correctly. */
+    border-radius: inherit;
   }
 
   /* Reduce motion for users who ask for it. */

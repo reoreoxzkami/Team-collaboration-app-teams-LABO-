@@ -1,10 +1,22 @@
-import type { Kudos, Member, Note, Poll, Task } from "../../types";
 import type {
+  ActivityEvent,
+  AppNotification,
+  Kudos,
+  Member,
+  Note,
+  Poll,
+  Task,
+  TaskComment,
+} from "../../types";
+import type {
+  ActivityEventRow,
   KudosRow,
   NoteRow,
+  NotificationRow,
   PollRow,
   PollVoteRow,
   ProfileRow,
+  TaskCommentRow,
   TaskRow,
   TeamMemberRow,
 } from "./types";
@@ -96,5 +108,36 @@ export const noteFromRow = (r: NoteRow): Note => ({
   color: r.color,
   pinned: r.pinned,
   authorId: r.author_id,
+  updatedAt: r.updated_at,
+});
+
+export const activityFromRow = (r: ActivityEventRow): ActivityEvent => ({
+  id: r.id,
+  actorId: r.actor_id,
+  kind: r.kind,
+  entityType: r.entity_type,
+  entityId: r.entity_id,
+  payload: r.payload ?? {},
+  createdAt: r.created_at,
+});
+
+export const notificationFromRow = (r: NotificationRow): AppNotification => ({
+  id: r.id,
+  kind: r.kind,
+  actorId: r.actor_id,
+  entityType: r.entity_type,
+  entityId: r.entity_id,
+  payload: r.payload ?? {},
+  readAt: r.read_at,
+  createdAt: r.created_at,
+});
+
+export const taskCommentFromRow = (r: TaskCommentRow): TaskComment => ({
+  id: r.id,
+  taskId: r.task_id,
+  authorId: r.author_id,
+  body: r.body,
+  mentions: r.mentions ?? [],
+  createdAt: r.created_at,
   updatedAt: r.updated_at,
 });

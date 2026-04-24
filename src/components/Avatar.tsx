@@ -17,7 +17,7 @@ export const Avatar = ({ member, size = "md", ring = false }: Props) => {
   if (!member) {
     return (
       <div
-        className={`${sizeMap[size]} flex items-center justify-center rounded-full bg-slate-200 text-slate-400`}
+        className={`${sizeMap[size]} flex items-center justify-center rounded-full bg-surface-raised text-ink-tertiary`}
       >
         ?
       </div>
@@ -25,7 +25,7 @@ export const Avatar = ({ member, size = "md", ring = false }: Props) => {
   }
   return (
     <div
-      className={`relative ${sizeMap[size]} flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${member.color} font-bold text-white shadow-glow ${ring ? "ring-4 ring-white" : ""}`}
+      className={`relative ${sizeMap[size]} flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${member.color} font-bold text-white shadow-glow ${ring ? "ring-4 ring-surface-base" : ""}`}
       title={member.name}
     >
       <span>{member.emoji}</span>

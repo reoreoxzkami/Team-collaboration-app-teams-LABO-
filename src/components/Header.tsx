@@ -7,6 +7,7 @@ import { signOut } from "../lib/auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useActiveTeam } from "../lib/team-context";
 import { ThemeToggle } from "./brand/ThemeToggle";
+import { NotificationCenter } from "./NotificationCenter";
 
 export const Header = () => {
   const { members, currentUserId, setCurrentUser, resetDemoData, cloud } =
@@ -42,6 +43,7 @@ export const Header = () => {
       </div>
 
       <div className="flex items-center gap-2">
+        <NotificationCenter />
         <ThemeToggle />
 
         {!cloud && (

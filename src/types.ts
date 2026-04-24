@@ -69,9 +69,61 @@ export interface Note {
 
 export type View =
   | "dashboard"
+  | "activity"
   | "members"
   | "tasks"
   | "kudos"
   | "mood"
   | "polls"
   | "notes";
+
+export type ActivityKind =
+  | "task.created"
+  | "task.status_changed"
+  | "task.assignee_changed"
+  | "task.deleted"
+  | "comment.created"
+  | "kudos.created"
+  | "poll.created"
+  | "poll.closed"
+  | "note.created"
+  | "member.joined"
+  | "member.mood_updated";
+
+export interface ActivityEvent {
+  id: string;
+  actorId: string | null;
+  kind: ActivityKind;
+  entityType: string;
+  entityId: string | null;
+  payload: Record<string, unknown>;
+  createdAt: string;
+}
+
+export type NotificationKind =
+  | "comment.mention"
+  | "comment.on_assigned_task"
+  | "task.assigned"
+  | "kudos.received"
+  | "poll.created";
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  actorId: string | null;
+  entityType: string;
+  entityId: string | null;
+  payload: Record<string, unknown>;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  authorId: string;
+  body: string;
+  mentions: string[];
+  createdAt: string;
+  updatedAt: string;
+}

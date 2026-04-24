@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  Activity,
   CheckSquare,
   ChevronLeft,
   ChevronRight,
@@ -20,6 +21,12 @@ const items: { id: View; label: string; icon: React.ReactNode; accent: string }[
       label: "ダッシュボード",
       icon: <LayoutDashboard className="h-5 w-5" />,
       accent: "from-fuchsia-500 to-pink-500",
+    },
+    {
+      id: "activity",
+      label: "アクティビティ",
+      icon: <Activity className="h-5 w-5" />,
+      accent: "from-indigo-500 to-fuchsia-500",
     },
     {
       id: "members",
