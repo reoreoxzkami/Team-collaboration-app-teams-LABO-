@@ -82,18 +82,14 @@ export const TeamChooser = ({ userId, displayEmail, onTeamSelected }: Props) => 
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden p-4 sm:p-8">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100" />
-
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="animate-slide-up mb-6 flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold uppercase tracking-widest text-brand-600">
-              Welcome
-            </div>
-            <h1 className="font-display text-2xl font-extrabold sm:text-3xl">
+            <div className="eyebrow text-brand-600">Welcome</div>
+            <h1 className="display-h1">
               <span className="gradient-text">チームを選択</span>
             </h1>
-            <p className="text-sm text-slate-500">{displayEmail}</p>
+            <p className="text-sm text-ink-tertiary">{displayEmail}</p>
           </div>
           <button
             onClick={() => signOut()}
@@ -106,18 +102,18 @@ export const TeamChooser = ({ userId, displayEmail, onTeamSelected }: Props) => 
         </div>
 
         {err && (
-          <div className="mb-4 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 ring-1 ring-rose-200">
+          <div className="animate-pop-in mb-4 rounded-xl bg-rose-50 p-3 text-xs text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30">
             {err}
           </div>
         )}
 
         {loading ? (
-          <div className="glass-panel p-6 text-sm text-slate-500">読み込み中…</div>
+          <div className="glass-panel p-6 text-sm text-ink-tertiary">読み込み中…</div>
         ) : (
           <>
             {teams.length > 0 && (
-              <section className="glass-panel mb-5 p-5">
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-500">
+              <section className="glass-panel animate-slide-up mb-5 p-5">
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-ink-tertiary">
                   <Users className="h-4 w-4" /> 参加中のチーム
                 </h2>
                 <ul className="space-y-2">
@@ -125,9 +121,9 @@ export const TeamChooser = ({ userId, displayEmail, onTeamSelected }: Props) => 
                     <li key={t.id}>
                       <button
                         onClick={() => onTeamSelected(t)}
-                        className="flex w-full items-center justify-between rounded-xl bg-white/80 p-3 text-left ring-1 ring-slate-200 transition hover:bg-white hover:shadow-md"
+                        className="flex w-full items-center justify-between rounded-xl bg-surface-raised/80 p-3 text-left ring-1 ring-line transition hover:-translate-y-0.5 hover:bg-surface-raised hover:shadow-md"
                       >
-                        <span className="font-bold text-slate-800">
+                        <span className="font-bold text-ink-primary">
                           {t.name}
                         </span>
                         <span className="rounded-full bg-gradient-to-r from-violet-500 to-pink-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
@@ -141,8 +137,11 @@ export const TeamChooser = ({ userId, displayEmail, onTeamSelected }: Props) => 
             )}
 
             <div className="grid gap-5 md:grid-cols-2">
-              <form onSubmit={createTeam} className="glass-panel p-5">
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-500">
+              <form
+                onSubmit={createTeam}
+                className="glass-panel animate-slide-up p-5"
+              >
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-ink-tertiary">
                   <Plus className="h-4 w-4" /> 新しいチーム
                 </h2>
                 <input
@@ -150,19 +149,22 @@ export const TeamChooser = ({ userId, displayEmail, onTeamSelected }: Props) => 
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
                   placeholder="チーム名（例：デザイン部）"
-                  className="w-full rounded-xl border border-slate-200 bg-white/80 p-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                  className="input"
                 />
                 <button
                   type="submit"
                   disabled={busy || !newTeamName.trim()}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110 disabled:opacity-60"
+                  className="btn-primary mt-3 w-full py-2.5"
                 >
                   チームを作る
                 </button>
               </form>
 
-              <form onSubmit={joinTeam} className="glass-panel p-5">
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-slate-500">
+              <form
+                onSubmit={joinTeam}
+                className="glass-panel animate-slide-up p-5"
+              >
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-ink-tertiary">
                   <Ticket className="h-4 w-4" /> 招待コードで参加
                 </h2>
                 <input
@@ -170,12 +172,12 @@ export const TeamChooser = ({ userId, displayEmail, onTeamSelected }: Props) => 
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   placeholder="例：ABCD-1234"
-                  className="w-full rounded-xl border border-slate-200 bg-white/80 p-2.5 text-sm font-mono uppercase outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                  className="input font-mono uppercase"
                 />
                 <button
                   type="submit"
                   disabled={busy || !joinCode.trim()}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-500/30 transition hover:brightness-110 disabled:opacity-60"
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-500/30 transition hover:brightness-110 hover:-translate-y-0.5 disabled:opacity-60"
                 >
                   参加する
                 </button>

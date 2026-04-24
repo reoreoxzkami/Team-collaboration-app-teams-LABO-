@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Header } from "./components/Header";
 import { MobileTabBar, Sidebar } from "./components/Sidebar";
 import { Dashboard } from "./components/Dashboard";
@@ -11,6 +12,7 @@ import { Notes } from "./components/Notes";
 import { DemoBanner } from "./components/DemoBanner";
 import { AuthGate } from "./components/auth/AuthGate";
 import { usePageTitle } from "./lib/seo";
+import { useTheme } from "./lib/theme";
 import type { View } from "./types";
 
 const VIEW_META: Record<View, { title: string; sub: string }> = {
@@ -24,6 +26,10 @@ const VIEW_META: Record<View, { title: string; sub: string }> = {
 };
 
 const App = () => {
+  // Keep theme initialized at the app root so localStorage + system
+  // listeners are active before any children render.
+  useTheme();
+
   const [view, setView] = useState<View>(() => {
     if (typeof window === "undefined") return "dashboard";
     const hash = window.location.hash.replace("#", "") as View;
@@ -36,7 +42,11 @@ const App = () => {
     // (access_token, refresh_token, error, ...), leave it untouched so the
     // Supabase client can parse it via detectSessionInUrl. Overwriting it
     // here would silently discard the session and bounce users back to login.
-    if (/(^|&)(access_token|refresh_token|provider_token|error|error_description|error_code)=/.test(current)) {
+    if (
+      /(^|&)(access_token|refresh_token|provider_token|error|error_description|error_code)=/.test(
+        current,
+      )
+    ) {
       return;
     }
     if (current === view) return;
@@ -55,20 +65,30 @@ const App = () => {
           <DemoBanner />
           <div className="mb-5 flex items-center gap-3">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-widest text-brand-500">
-                {VIEW_META[view].title}
+              <div className="eyebrow">{VIEW_META[view].title}</div>
+              <div className="text-sm text-ink-secondary">
+                {VIEW_META[view].sub}
               </div>
-              <div className="text-sm text-slate-500">{VIEW_META[view].sub}</div>
             </div>
           </div>
 
-          {view === "dashboard" && <Dashboard onNavigate={setView} />}
-          {view === "members" && <Members />}
-          {view === "tasks" && <TaskBoard />}
-          {view === "kudos" && <KudosWall />}
-          {view === "mood" && <MoodCheckin />}
-          {view === "polls" && <Polls />}
-          {view === "notes" && <Notes />}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            >
+              {view === "dashboard" && <Dashboard onNavigate={setView} />}
+              {view === "members" && <Members />}
+              {view === "tasks" && <TaskBoard />}
+              {view === "kudos" && <KudosWall />}
+              {view === "mood" && <MoodCheckin />}
+              {view === "polls" && <Polls />}
+              {view === "notes" && <Notes />}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         <MobileTabBar view={view} onSelect={setView} />

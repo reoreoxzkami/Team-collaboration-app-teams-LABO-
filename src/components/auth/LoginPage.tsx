@@ -1,11 +1,13 @@
 import { FormEvent, useState } from "react";
-import { Sparkles, Mail, KeyRound, LogIn, UserPlus, Info } from "lucide-react";
+import { Mail, KeyRound, LogIn, UserPlus, Info } from "lucide-react";
 import {
   sendPasswordReset,
   signInWithGoogle,
   signInWithPassword,
   signUpWithPassword,
 } from "../../lib/auth";
+import { LogoMark } from "../brand/Logo";
+import { ThemeToggle } from "../brand/ThemeToggle";
 
 type Mode = "signin" | "signup";
 
@@ -63,35 +65,36 @@ export const LoginPage = () => {
 
   return (
     <div className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden p-4">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-violet-100 via-pink-100 to-amber-100" />
       <div className="absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top,#000_30%,transparent_75%)]">
-        <div className="absolute -top-24 left-1/4 h-[420px] w-[420px] rounded-full bg-violet-400/40 blur-3xl" />
-        <div className="absolute top-1/3 right-0 h-[380px] w-[380px] rounded-full bg-pink-400/40 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-[340px] w-[340px] rounded-full bg-sky-400/40 blur-3xl" />
+        <div className="absolute -top-24 left-1/4 h-[420px] w-[420px] animate-float-slow rounded-full bg-violet-400/40 blur-3xl dark:bg-violet-500/25" />
+        <div className="absolute top-1/3 right-0 h-[380px] w-[380px] animate-float-slow rounded-full bg-pink-400/40 blur-3xl dark:bg-pink-500/25" />
+        <div className="absolute bottom-0 left-0 h-[340px] w-[340px] animate-float-slow rounded-full bg-sky-400/40 blur-3xl dark:bg-sky-500/25" />
       </div>
 
-      <div className="glass-panel w-full max-w-md p-6 sm:p-8">
-        <div className="mb-5 flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 text-white shadow-lg shadow-violet-500/30">
-            <Sparkles className="h-5 w-5" />
-          </span>
+      <div className="absolute right-4 top-4 z-10">
+        <ThemeToggle />
+      </div>
+
+      <div className="glass-panel animate-slide-up w-full max-w-md p-6 sm:p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <LogoMark size={44} />
           <div>
-            <div className="font-display text-xl font-extrabold">
-              <span className="gradient-text">teams LABO</span>
+            <div className="font-display text-xl font-extrabold leading-tight">
+              teams<span className="gradient-text"> LABO</span>
             </div>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-ink-tertiary">
               チーム連携を、もっとカラフルに。
             </div>
           </div>
         </div>
 
-        <div className="mb-5 inline-flex rounded-full bg-white/80 p-1 ring-1 ring-slate-200">
+        <div className="mb-5 inline-flex rounded-full bg-surface-raised/80 p-1 ring-1 ring-line">
           <button
             onClick={() => setMode("signin")}
             className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
               mode === "signin"
                 ? "bg-gradient-to-r from-violet-500 to-pink-500 text-white shadow"
-                : "text-slate-600 hover:text-slate-900"
+                : "text-ink-secondary hover:text-ink-primary"
             }`}
           >
             サインイン
@@ -101,7 +104,7 @@ export const LoginPage = () => {
             className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
               mode === "signup"
                 ? "bg-gradient-to-r from-violet-500 to-pink-500 text-white shadow"
-                : "text-slate-600 hover:text-slate-900"
+                : "text-ink-secondary hover:text-ink-primary"
             }`}
           >
             新規登録
@@ -111,58 +114,58 @@ export const LoginPage = () => {
         <button
           type="button"
           onClick={google}
-          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-surface-raised px-4 py-3 text-sm font-bold text-ink-primary shadow-sm ring-1 ring-line transition hover:-translate-y-0.5 hover:shadow-md"
         >
           <GoogleIcon />
           Googleで{mode === "signin" ? "サインイン" : "続行"}
         </button>
 
-        <div className="mb-3 flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-          <div className="h-px flex-1 bg-slate-200" />
+        <div className="mb-3 flex items-center gap-3 text-[11px] font-bold uppercase tracking-widest text-ink-tertiary">
+          <div className="h-px flex-1 bg-line" />
           または
-          <div className="h-px flex-1 bg-slate-200" />
+          <div className="h-px flex-1 bg-line" />
         </div>
 
         <form onSubmit={submit} className="space-y-3">
           {mode === "signup" && (
             <label className="block">
-              <span className="mb-1 block text-xs font-bold text-slate-600">
+              <span className="mb-1 block text-xs font-bold text-ink-secondary">
                 表示名
               </span>
               <div className="relative">
-                <UserPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <UserPlus className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-tertiary" />
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="例：アキ"
-                  className="w-full rounded-xl border border-slate-200 bg-white/80 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                  className="input pl-9"
                 />
               </div>
             </label>
           )}
           <label className="block">
-            <span className="mb-1 block text-xs font-bold text-slate-600">
+            <span className="mb-1 block text-xs font-bold text-ink-secondary">
               メールアドレス
             </span>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-tertiary" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-200 bg-white/80 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                className="input pl-9"
               />
             </div>
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs font-bold text-slate-600">
+            <span className="mb-1 block text-xs font-bold text-ink-secondary">
               パスワード
             </span>
             <div className="relative">
-              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-tertiary" />
               <input
                 type="password"
                 required
@@ -170,18 +173,18 @@ export const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="6文字以上"
-                className="w-full rounded-xl border border-slate-200 bg-white/80 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                className="input pl-9"
               />
             </div>
           </label>
 
           {err && (
-            <div className="rounded-xl bg-rose-50 p-3 text-xs text-rose-700 ring-1 ring-rose-200">
+            <div className="animate-pop-in rounded-xl bg-rose-50 p-3 text-xs text-rose-700 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30">
               {err}
             </div>
           )}
           {msg && (
-            <div className="rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700 ring-1 ring-emerald-200">
+            <div className="animate-pop-in rounded-xl bg-emerald-50 p-3 text-xs text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
               {msg}
             </div>
           )}
@@ -189,7 +192,7 @@ export const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-pink-500 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110 disabled:opacity-60"
+            className="btn-primary w-full py-3"
           >
             {mode === "signin" ? (
               <>
@@ -208,17 +211,17 @@ export const LoginPage = () => {
             <button
               type="button"
               onClick={reset}
-              className="mx-auto block text-xs text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
+              className="mx-auto block text-xs text-ink-tertiary underline-offset-2 hover:text-ink-primary hover:underline"
             >
               パスワードを忘れた
             </button>
           )}
         </form>
 
-        <div className="mt-6 flex items-start gap-2 rounded-xl bg-white/60 p-3 text-[11px] text-slate-500 ring-1 ring-slate-200">
-          <Info className="h-4 w-4 flex-none text-slate-400" />
+        <div className="mt-6 flex items-start gap-2 rounded-xl bg-surface-raised/60 p-3 text-[11px] text-ink-tertiary ring-1 ring-line">
+          <Info className="h-4 w-4 flex-none text-ink-tertiary" />
           <span>
-            サインイン後、<strong>チームの作成</strong>または<strong>招待コードでの参加</strong>に進みます。
+            サインイン後、<strong className="text-ink-secondary">チームの作成</strong>または<strong className="text-ink-secondary">招待コードでの参加</strong>に進みます。
           </span>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { signOut } from "../lib/auth";
 import { isSupabaseConfigured } from "../lib/supabase";
 import { useActiveTeam } from "../lib/team-context";
+import { ThemeToggle } from "./brand/ThemeToggle";
 
 export const Header = () => {
   const { members, currentUserId, setCurrentUser, resetDemoData, cloud } =
@@ -17,19 +18,19 @@ export const Header = () => {
   return (
     <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
       <div>
-        <div className="text-xs font-bold uppercase tracking-widest text-brand-600">
-          Welcome back
-        </div>
-        <h1 className="font-display text-3xl font-extrabold leading-tight md:text-4xl">
+        <div className="eyebrow text-brand-600">Welcome back</div>
+        <h1 className="display-h1 leading-tight">
           こんにちは、
           <span className="gradient-text">{me?.name ?? "ゲスト"}</span>
           <span className="ml-2">{me?.emoji}</span>
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-ink-secondary">
           {cloud && activeTeam ? (
             <>
-              <span className="font-bold text-slate-700">{activeTeam.name}</span>{" "}
-              <span className="font-mono text-[11px] text-slate-400">
+              <span className="font-bold text-ink-primary">
+                {activeTeam.name}
+              </span>{" "}
+              <span className="font-mono text-[11px] text-ink-tertiary">
                 #{activeTeam.invite_code}
               </span>{" "}
               — チームでつながろう ✨
@@ -40,7 +41,9 @@ export const Header = () => {
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+
         {!cloud && (
           <button
             onClick={() => {
@@ -80,8 +83,6 @@ export const Header = () => {
             onClick={() => {
               if (confirm("サインアウトしますか？")) {
                 signOut().then(() => {
-                  // Drop persisted cloud snapshot so the next visitor starts
-                  // clean (login page), not on the previous team's data.
                   window.localStorage.removeItem("teams-labo-active-team");
                   window.localStorage.removeItem("teams-labo-state");
                   window.location.reload();
@@ -99,8 +100,8 @@ export const Header = () => {
         <div className="glass-panel flex items-center gap-2 py-1.5 pl-1.5 pr-3">
           <Avatar member={me} size="md" ring />
           <div className="text-xs">
-            <div className="font-bold text-slate-800">{me?.name}</div>
-            <div className="flex items-center gap-1 text-slate-500">
+            <div className="font-bold text-ink-primary">{me?.name}</div>
+            <div className="flex items-center gap-1 text-ink-tertiary">
               <StatusDot status={me?.status ?? "online"} />
               <span>{me?.role}</span>
             </div>
@@ -108,7 +109,7 @@ export const Header = () => {
           {!cloud && (
             <select
               aria-label="現在のユーザー"
-              className="ml-1 rounded-lg border border-slate-200 bg-white/80 px-2 py-1 text-xs font-semibold text-slate-700"
+              className="ml-1 rounded-lg border border-line bg-surface-raised px-2 py-1 text-xs font-semibold text-ink-secondary"
               value={currentUserId}
               onChange={(e) => setCurrentUser(e.target.value)}
             >

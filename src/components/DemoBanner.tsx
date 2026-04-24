@@ -26,15 +26,15 @@ export const DemoBanner = () => {
   if (!hasDemoMembers && !hasDemoContent) return null;
 
   return (
-    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-violet-200/60 bg-gradient-to-r from-violet-50 via-pink-50 to-amber-50 p-3 pl-4 shadow-sm">
+    <div className="animate-fade-in mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-violet-200/60 bg-gradient-to-r from-violet-50 via-pink-50 to-amber-50 p-3 pl-4 shadow-sm dark:border-violet-500/20 dark:from-violet-500/10 dark:via-pink-500/10 dark:to-amber-500/10">
       <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500 text-white shadow-lg shadow-violet-500/30">
         <Sparkles className="h-4 w-4" />
       </span>
       <div className="min-w-0 flex-1 text-sm">
-        <div className="font-bold text-slate-800">
+        <div className="font-bold text-ink-primary">
           デモデータを表示中（アキ / レン / ソラ ほか）
         </div>
-        <div className="text-xs text-slate-600">
+        <div className="text-xs text-ink-secondary">
           タスク・Kudos・投票・メモのいずれかを自分で追加すると<strong>デモのタスク・Kudos・投票・メモはまとめて自動で消えます</strong>（メンバーは残ります）。すべてを今すぐ消すには右のボタンを押してください。
         </div>
       </div>
@@ -49,7 +49,7 @@ export const DemoBanner = () => {
             if (hasDemoMembers) dismissDemoMembers();
           }
         }}
-        className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+        className="inline-flex items-center gap-1 rounded-full bg-surface-raised px-3 py-1.5 text-xs font-bold text-ink-primary shadow-sm ring-1 ring-line transition hover:-translate-y-0.5"
       >
         <X className="h-3 w-3" />
         デモをすべて消す
