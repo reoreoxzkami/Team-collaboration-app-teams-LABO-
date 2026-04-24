@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#7c3aed" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
 
     <title>teams LABO — チーム連携を高めるカラフルPWA</title>
     <meta
@@ -43,13 +43,29 @@
     />
     <meta name="twitter:image" content="https://reoreoxzkami.github.io/Team-collaboration-app-teams-LABO-/og-image.png" />
 
-    <!-- Fonts -->
+    <!-- Fonts: Inter (Latin), Noto Sans JP (Japanese), Plus Jakarta Sans (display) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Flash-of-wrong-theme prevention: set .dark class before first paint -->
+    <script>
+      (function () {
+        try {
+          var s = localStorage.getItem("teams-labo-theme");
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var dark = s === "dark" || ((s === null || s === "system") && prefersDark);
+          if (dark) document.documentElement.classList.add("dark");
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", dark ? "#0b0f1a" : "#7c3aed");
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
